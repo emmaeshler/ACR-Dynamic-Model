@@ -81,34 +81,27 @@ export function WhyMLHigh() {
         <p>
           <strong className="font-semibold text-foreground">No training on your transaction data.</strong>{" "}
           Large language models are trained on public internet text. They have never seen your invoices,
-          your win/loss records, or your customer-specific pricing tiers. You can paste data into a
-          prompt, but the model has no persistent memory of it and no way to learn patterns across
-          millions of rows the way a supervised ML model does. Context window limits make this
+          your win/loss records, or your customer-specific pricing tiers. Context window limits make this
           fundamentally architectural, not just a current limitation.
         </p>
         <p>
           <strong className="font-semibold text-foreground">Hallucination risk in financial outputs.</strong>{" "}
-          LLMs generate plausible-sounding text, not verified calculations. When asked to recommend a
-          price, an LLM may produce a number that looks reasonable but has no statistical grounding.
-          In pricing, a hallucinated recommendation that&apos;s off by even 2-3% can mean six-figure
-          revenue impacts across a product portfolio. The failure mode is silent — the number looks
-          right, so no one checks it.
+          LLMs generate plausible-sounding text, not verified calculations. A hallucinated recommendation
+          that&apos;s off by even 2-3% can mean six-figure revenue impacts across a product portfolio.
+          The failure mode is silent — the number looks right, so no one checks it.
         </p>
         <p>
           <strong className="font-semibold text-foreground">Auditability requirements.</strong>{" "}
-          Pricing decisions face internal and external audit scrutiny. Regulators, procurement teams,
-          and internal compliance all need to trace a price back to its inputs. Our ML model provides
+          Pricing decisions face internal and external audit scrutiny. Our ML model provides
           feature importance scores for every recommendation — you can see exactly which variables
-          drove the price and by how much. An LLM cannot provide this. Its reasoning is opaque by
-          design: attention weights are not interpretable as causal explanations.
+          drove the price and by how much. An LLM cannot provide this.
         </p>
         <p>
           <strong className="font-semibold text-foreground">Reproducibility guarantees.</strong>{" "}
-          ML model inference is deterministic: same inputs, same outputs, every time. This is critical
-          for pricing consistency across sales reps, regions, and time periods. LLMs are stochastic
+          ML model inference is deterministic: same inputs, same outputs, every time. LLMs are stochastic
           even at temperature zero due to floating-point non-determinism in parallel computation.
-          Two reps asking the same question about the same customer may get different price suggestions.
-          That&apos;s unacceptable for a pricing system.
+          Two reps asking the same question may get different price suggestions. That&apos;s unacceptable
+          for a pricing system.
         </p>
       </div>
     </div>

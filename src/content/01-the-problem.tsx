@@ -49,10 +49,24 @@ function ProblemVisual() {
   );
 }
 
-/* ── Low depth ── */
+/* ── Low depth: Visual hero + short caption ── */
 export function ProblemLow() {
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
+      <div className="rounded-lg border bg-muted/30 p-6">
+        <ProblemVisual />
+      </div>
+      <p className="text-center text-sm text-muted-foreground">
+        The market moves. Your price doesn&apos;t. The gap is money left on the table.
+      </p>
+    </div>
+  );
+}
+
+/* ── Medium depth: Narrative explanation ── */
+export function ProblemMedium() {
+  return (
+    <div className="space-y-4">
       <h3 className="text-lg font-semibold tracking-tight">We&apos;re leaving money on the table.</h3>
       <p className="text-sm leading-relaxed text-muted-foreground">
         When pricing stays static, the market moves without you. Competitors adjust, raw material
@@ -60,24 +74,17 @@ export function ProblemLow() {
         Every day that gap widens, you&apos;re either overcharging and losing deals, or undercharging
         and giving away margin.
       </p>
-    </div>
-  );
-}
-
-/* ── Medium depth ── */
-export function ProblemMedium() {
-  return (
-    <div className="space-y-4">
-      <h3 className="text-lg font-semibold tracking-tight">Static pricing vs. a dynamic market</h3>
       <p className="text-sm leading-relaxed text-muted-foreground">
         The blue line is what the market is actually doing — prices fluctuate with demand, competition,
         and supply. The dashed red line is your price: flat. The shaded area between them is value
-        you&apos;re either leaving on the table or losing to competitors who adapt faster. Over a
-        full fiscal year, that gap compounds into millions in unrealized revenue.
+        you&apos;re either leaving on the table or losing to competitors who adapt faster.
       </p>
-      <div className="mt-4 rounded-lg border bg-muted/30 p-4">
-        <ProblemVisual />
-      </div>
+      <p className="text-sm leading-relaxed text-muted-foreground">
+        How much value depends on how you structure pricing. A simple list-and-discount approach
+        captures roughly 54% of addressable margin. Tiered pricing levels get you to about 78%.
+        A model that recommends a target price per deal — the approach we&apos;ll walk through —
+        captures up to 92%. The gap between where you are and that ceiling is the opportunity.
+      </p>
     </div>
   );
 }
@@ -87,9 +94,6 @@ export function ProblemHigh() {
   return (
     <div className="space-y-5">
       <h3 className="text-lg font-semibold tracking-tight">Quantifying revenue leakage</h3>
-      <div className="mt-4 rounded-lg border bg-muted/30 p-4">
-        <ProblemVisual />
-      </div>
       <div className="space-y-3 text-sm leading-relaxed text-muted-foreground">
         <p>
           Revenue leakage from static pricing is not a single-point failure — it compounds.

@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dynamic Model Maturity Walkthrough v2</title>
+  <style>
+    :root{
+      --bg:#f4f1e8; --card:#fffdf8; --line:#d3cabd; --ink:#1f1f1c; --muted:#666156;
+      --blue:#1d4ed8; --amber:#b45309; --green:#0f766e;
+      --radius:12px; --shadow:0 10px 24px rgba(0,0,0,.08);
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;color:var(--ink);font-family:"Segoe UI","Avenir Next","Trebuchet MS",sans-serif;
+      background:radial-gradient(circle at 10% 0,#f9f6ee 0,transparent 42%),radial-gradient(circle at 90% 100%,#e9f2eb 0,transparent 36%),var(--bg);
+    }
+    .page{max-width:1280px;margin:16px auto;padding:0 12px;display:grid;gap:12px}
+    .panel{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+    .top{padding:10px 12px;display:flex;gap:8px;justify-content:space-between;align-items:center;flex-wrap:wrap}
+    .brand{font-weight:700;font-size:.92rem;color:#3f3b34}
+    .nav{display:flex;gap:8px;flex-wrap:wrap}
+    .nav-btn{border:1px solid #cfc6b7;border-radius:999px;background:#fff;padding:7px 11px;font-size:.82rem;cursor:pointer}
+    .nav-btn.active{border-color:#1f1f1c;background:#edf3ff;font-weight:700}
+    .delta{font-size:.78rem;color:#5d584f;border:1px dashed #c8beac;border-radius:999px;padding:6px 10px;background:#fbf8f0}
+    .view{display:none;padding:12px}
+    .view.active{display:block}
+    .title{margin:0 0 8px;font-size:1.06rem}
+    .sub{margin:0 0 10px;color:var(--muted);font-size:.9rem;line-height:1.35}
+
+    .diag-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+    .q,.ctrl,.card{border:1px solid #e5dece;border-radius:10px;background:#fff;padding:8px}
+    .q{display:grid;gap:6px;font-size:.84rem}
+    select,input[type="range"]{width:100%}
+    select{border:1px solid #ccc3b5;border-radius:8px;padding:6px;background:#fff}
+    .ctrl{display:grid;gap:4px;font-size:.8rem}
+    .ctrl .v{font-weight:700}
+    .ctrl{position:relative}
+    .ctrl-badge{
+      position:absolute;
+      bottom:5px;
+      right:6px;
+      font-size:.62rem;
+      line-height:1;
+      padding:2px 5px;
+      border-radius:999px;
+      border:1px solid #d7cebf;
+      color:#5f5a50;
+      background:#fbf8f0;
+      letter-spacing:.04em;
+    }
+    .diag-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px}
+    .btn{border:1px solid #1f1f1c;border-radius:10px;background:#fff;padding:8px 11px;font-weight:600;cursor:pointer}
+    .btn.alt{border-color:#9c9586;color:#4d493f}
+    .result{border:1px dashed #cfc4af;border-radius:10px;background:#fbf8ef;padding:8px;font-size:.86rem;color:#534f46}
+
+    .state-grid{display:grid;grid-template-columns:minmax(280px,30%) minmax(560px,70%);gap:10px;align-items:start}
+    .stack{display:grid;gap:10px}
+    .card{display:grid;gap:7px}
+    .card h3{margin:0;font-size:.9rem;color:#3f3b34}
+    .mixers{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;min-height:196px;align-items:end}
+    .fader{display:grid;justify-items:center;gap:5px}
+    .fader label{font-size:.76rem;font-weight:700;color:#4f4b42;text-align:center}
+    .lvl{font-size:.78rem;color:#5f5a50}
+    input[type="range"].vertical{writing-mode:bt-lr;-webkit-appearance:slider-vertical;width:24px;height:138px;accent-color:var(--blue);cursor:pointer}
+    .nudge{width:22px;height:22px;border:1px solid #bfb6a7;border-radius:6px;background:#fff;color:#4a453c;font-weight:700;cursor:pointer;display:grid;place-items:center;padding:0}
+    .compat{border:1px dashed #cfc4af;border-radius:8px;background:#fbf8ef;color:#5d584f;font-size:.77rem;line-height:1.3;padding:7px}
+    .compat.bad{border-color:#d34b2b;background:#fff3ef;color:#7a2f1d}
+
+    .control-grid{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:6px}
+    .pill{font-size:.72rem;color:#6a655b}
+    .control-hidden{display:none}
+    .control-note{
+      border:1px dashed #d6ccbb;
+      border-radius:8px;
+      background:#fbf8ef;
+      color:#615b50;
+      padding:6px;
+      font-size:.75rem;
+      line-height:1.3;
+    }
+
+    .deal-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+    .deal{border:1px solid #e5dece;border-radius:8px;background:#fffefb;padding:6px;font-size:.76rem}
+    .deal .big{font-size:1.05rem;font-weight:700}
+
+    .viz-wrap{border:1px solid #e5dece;border-radius:10px;background:#fff;padding:8px;display:grid;gap:8px}
+    .head-row{display:flex;justify-content:space-between;align-items:center}
+    .hint{font-size:.72rem;color:#6b655b}
+    .mini-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+    .mini-card{border:1px solid #e6dece;border-radius:8px;background:#fffefb;padding:8px;display:grid;gap:6px;align-content:start}
+    .mini-card .k{font-size:.86rem;font-weight:700;color:#4f4a42;margin:0}
+    .mini-card svg{width:100%;height:122px;border:1px solid #eee6d7;border-radius:6px;background:linear-gradient(180deg,#fff,#fcfbf8)}
+    .mini-card .txt{border:1px solid #efe6d8;border-radius:8px;background:#fff;padding:8px;min-height:70px;font-size:.88rem;line-height:1.3}
+    .mini-card .txt .label{display:block;font-size:.92rem;font-weight:700;margin-bottom:4px}
+    .why{margin:0;padding-left:16px;font-size:.78rem;line-height:1.3}
+
+    .matrix-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;align-items:start}
+    .matrix-lane{
+      border:1px solid #e5dece;
+      border-radius:10px;
+      background:#fffefb;
+      padding:8px;
+      display:grid;
+      gap:8px;
+    }
+    .lane-head{
+      border:1px solid #e8dfcf;
+      border-radius:8px;
+      background:#faf6ee;
+      padding:7px 8px;
+      font-size:.82rem;
+      font-weight:800;
+      letter-spacing:.06em;
+      text-transform:uppercase;
+      color:#454037;
+      text-align:center;
+    }
+    .lane-head.synth{color:#0f3aa9;background:#eef3ff}
+    .lane-head.steer{color:#8a4307;background:#fff3e8}
+    .lane-head.learn{color:#0a5a54;background:#e9f8f5}
+    .matrix-card{border:1px solid #e6dece;border-radius:10px;background:#fff;padding:8px;display:grid;gap:6px}
+    .matrix-head{display:flex;justify-content:space-between;align-items:center;font-size:.8rem;font-weight:700}
+    .matrix-desc{font-size:.79rem;line-height:1.3;color:#3f3a31;min-height:34px}
+    .matrix-svg{width:100%;height:90px;border:1px solid #eee6d7;border-radius:6px;background:linear-gradient(180deg,#fff,#fcfbf8)}
+    .matrix-copy{border-top:1px dashed #e0d7c8;padding-top:5px;font-size:.76rem;line-height:1.28;color:#4f4a41}
+    .cap-row{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      flex-wrap:wrap;
+      font-size:.68rem;
+      color:#5f5a50;
+    }
+    .cap{
+      display:inline-flex;
+      gap:4px;
+      align-items:center;
+      border:1px solid #eadfcd;
+      border-radius:999px;
+      padding:2px 6px;
+      background:#fffefb;
+      cursor:help;
+    }
+    .harvey{
+      --p:50;
+      width:11px;
+      height:11px;
+      border-radius:50%;
+      border:1px solid #8f8778;
+      background:
+        conic-gradient(#4c4740 calc(var(--p) * 1%), #fff 0);
+      display:inline-block;
+      cursor:help;
+    }
+
+    .hover-preview{position:fixed;display:none;width:min(620px,94vw);z-index:40;background:#fffdf8;border:1px solid #cfc5b5;border-radius:10px;box-shadow:0 14px 32px rgba(0,0,0,.18);padding:8px;pointer-events:none}
+    .hover-preview .head{font-size:.82rem;color:#4d483f;margin-bottom:6px;font-weight:700}
+    .hover-preview svg{width:100%;height:280px;border:1px solid #e9e1d2;border-radius:8px;background:linear-gradient(180deg,#fff,#fcfbf8)}
+    .hover-preview .desc{margin-top:6px;font-size:.78rem;color:#615c52;line-height:1.3}
+
+    @media (max-width:1120px){
+      .diag-grid,.state-grid,.deal-grid,.mini-grid,.matrix-grid{grid-template-columns:1fr}
+      .control-grid{grid-template-columns:1fr 1fr}
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="panel top">
+      <div class="brand">Dynamic Model Maturity Walkthrough v2</div>
+      <nav class="nav">
+        <button class="nav-btn active" data-view="diagnostic">Diagnostic</button>
+        <button class="nav-btn" data-view="current">Current State</button>
+        <button class="nav-btn" data-view="future">Future State</button>
+        <button class="nav-btn" data-view="matrix">Full Matrix</button>
+      </nav>
+      <div class="delta" id="deltaPill">Delta: price +$0 | win +0 pts | margin +0 pts</div>
+    </header>
+
+    <section class="panel view active" data-view-panel="diagnostic">
+      <h2 class="title">Diagnostic + Scenario Setup</h2>
+      <p class="sub">Set the baseline maturity and shared scenario assumptions here. Current/Future tabs then focus on model controls and outcomes.</p>
+      <div class="diag-grid">
+        <div class="q"><label>Baseline guidance maturity</label><select id="q1"><option value="0">L0 formula/list</option><option value="1">L1 broad segments</option><option value="2">L2 micro-segmentation</option><option value="3">L3 linked price+win</option><option value="4">L4 continuous recalibration</option></select></div>
+        <div class="q"><label>Guidance governance maturity</label><select id="q2"><option value="0">L0 manual</option><option value="1">L1 static guardrails</option><option value="2">L2 trigger-based rules</option><option value="3">L3 experiment validated</option><option value="4">L4 adaptive governance</option></select></div>
+        <div class="q"><label>Learning maturity</label><select id="q3"><option value="0">L0 none</option><option value="1">L1 KPI only</option><option value="2">L2 pilots/phased</option><option value="3">L3 holdouts/causal</option><option value="4">L4 always-on</option></select></div>
+        <div class="q"><label>Refresh cadence</label><select id="q4"><option value="0">Ad hoc</option><option value="1">Periodic manual</option><option value="2">Regular cadence</option><option value="3">Frequent evidence-based</option><option value="4">Continuous</option></select></div>
+      </div>
+      <h3 style="margin:12px 0 8px;font-size:.9rem;">Shared Deal Scenario Inputs</h3>
+      <div class="diag-grid">
+        <div class="ctrl"><span>List Price</span><input id="listPrice" type="range" min="50" max="300" step="5" value="120"><span class="v" id="listPriceVal">$120</span></div>
+        <div class="ctrl"><span>Unit Cost</span><input id="unitCost" type="range" min="20" max="200" step="5" value="70"><span class="v" id="unitCostVal">$70</span></div>
+        <div class="ctrl"><span>Deal Pressure</span><input id="dealPressure" type="range" min="0" max="100" step="5" value="45"><span class="v" id="dealPressureVal">45</span></div>
+        <div class="ctrl"><span class="pill">Note</span><span>These assumptions are shared by both Current and Future states.</span></div>
+      </div>
+      <div class="diag-actions">
+        <button class="btn" id="runDiagnostic">Run Diagnostic</button>
+        <button class="btn alt" id="applyToCurrent">Apply Result To Current</button>
+      </div>
+      <div class="result" id="diagResult">Result: Generalize L1 | Guidance L1 | Learning L1</div>
+    </section>
+
+    <section class="panel view" data-view-panel="current">
+      <h2 class="title">Current State</h2>
+      <p class="sub">Tune current maturity and pricing team controls to represent today’s reality.</p>
+      <div class="state-grid">
+        <div class="stack">
+          <article class="card">
+            <h3>Maturity Mixer</h3>
+            <div class="mixers">
+              <div class="fader"><label>Generalize</label><button class="nudge" data-nudge-target="currentSynth" data-dir="up">+</button><input class="vertical" id="currentSynth" type="range" min="0" max="4" step="1" value="1"><button class="nudge" data-nudge-target="currentSynth" data-dir="down">-</button><div class="lvl" id="currentSynthLvl">L1</div></div>
+              <div class="fader"><label>Guidance</label><button class="nudge" data-nudge-target="currentSteer" data-dir="up">+</button><input class="vertical" id="currentSteer" type="range" min="0" max="4" step="1" value="1"><button class="nudge" data-nudge-target="currentSteer" data-dir="down">-</button><div class="lvl" id="currentSteerLvl">L1</div></div>
+              <div class="fader"><label>Learning</label><button class="nudge" data-nudge-target="currentLearn" data-dir="up">+</button><input class="vertical" id="currentLearn" type="range" min="0" max="4" step="1" value="1"><button class="nudge" data-nudge-target="currentLearn" data-dir="down">-</button><div class="lvl" id="currentLearnLvl">L1</div></div>
+            </div>
+            <div class="compat" id="currentCompat"></div>
+          </article>
+
+          <article class="card">
+            <h3>Commercial Outcome</h3>
+            <div class="deal-grid">
+              <div class="deal"><div>Recommended Price</div><div class="big" id="currentPrice">$0</div></div>
+              <div class="deal"><div>Expected Win</div><div class="big" id="currentWin">N/A</div></div>
+              <div class="deal"><div>Margin %</div><div class="big" id="currentMargin">0%</div></div>
+            </div>
+          </article>
+
+        </div>
+
+        <article class="viz-wrap">
+          <div class="head-row"><h3 style="margin:0;font-size:.9rem;color:#3f3b34;">Model Behavior</h3><span class="hint">Hover minis for full preview</span></div>
+          <div class="mini-grid">
+            <div class="mini-card"><p class="k">Generalize</p><svg id="currentSynthMini" viewBox="0 0 220 90"></svg><div class="txt"><span class="label" style="color:var(--blue)">Generalize</span><span id="currentSynthText"></span></div></div>
+            <div class="mini-card"><p class="k">Guidance</p><svg id="currentSteerMini" viewBox="0 0 220 90"></svg><div class="txt"><span class="label" style="color:var(--amber)">Guidance</span><span id="currentSteerText"></span></div></div>
+            <div class="mini-card"><p class="k">Learning</p><svg id="currentLearnMini" viewBox="0 0 220 90"></svg><div class="txt"><span class="label" style="color:var(--green)">Learning</span><span id="currentLearnText"></span></div></div>
+          </div>
+          <div style="font-size:.82rem;color:#5f5a50;font-weight:700;">Why this price?</div>
+          <ul class="why" id="currentWhy"></ul>
+        </article>
+      </div>
+
+      <article class="card" style="margin-top:10px;">
+        <h3>Pricing Team Control Surface</h3>
+        <div class="control-grid">
+          <div class="ctrl" id="currentMarginFloorWrap"><span class="ctrl-badge">L0</span><span>Margin % Floor</span><input id="currentMarginFloor" type="range" min="5" max="40" step="1" value="22"><span class="v" id="currentMarginFloorVal">22%</span></div>
+          <div class="ctrl" id="currentSegAAdderWrap"><span class="ctrl-badge">L1</span><span>Segment A Adder (%)</span><input id="currentSegAAdder" type="range" min="-5" max="15" step="1" value="2"><span class="v" id="currentSegAAdderVal">2%</span></div>
+          <div class="ctrl" id="currentSegBAdderWrap"><span class="ctrl-badge">L1</span><span>Segment B Adder (%)</span><input id="currentSegBAdder" type="range" min="-5" max="15" step="1" value="1"><span class="v" id="currentSegBAdderVal">1%</span></div>
+          <div class="ctrl" id="currentLowInvAdderWrap"><span class="ctrl-badge">L2</span><span>Low Inventory Adder (%)</span><input id="currentLowInvAdder" type="range" min="0" max="15" step="1" value="4"><span class="v" id="currentLowInvAdderVal">4%</span></div>
+          <div class="ctrl" id="currentDaysSupplyWrap"><span class="ctrl-badge">L2</span><span>Days of Supply Threshold</span><input id="currentDaysSupply" type="range" min="5" max="120" step="5" value="35"><span class="v" id="currentDaysSupplyVal">35</span></div>
+          <div class="ctrl" id="currentPctUnderTestWrap"><span class="ctrl-badge">L3</span><span>% Transactions Under Test</span><input id="currentPctUnderTest" type="range" min="0" max="40" step="1" value="10"><span class="v" id="currentPctUnderTestVal">10%</span></div>
+          <div class="ctrl" id="currentTestPriceChangeWrap"><span class="ctrl-badge">L3</span><span>Test Price Change (%)</span><input id="currentTestPriceChange" type="range" min="-10" max="10" step="1" value="2"><span class="v" id="currentTestPriceChangeVal">2%</span></div>
+          <div class="ctrl" id="currentNumTestsWrap"><span class="ctrl-badge">L4</span><span># of Price Tests</span><input id="currentNumTests" type="range" min="0" max="30" step="1" value="6"><span class="v" id="currentNumTestsVal">6</span></div>
+          <div class="ctrl" id="currentTestRangeWrap"><span class="ctrl-badge">L4</span><span>Price Test Range (%)</span><input id="currentTestRange" type="range" min="1" max="20" step="1" value="6"><span class="v" id="currentTestRangeVal">6%</span></div>
+        </div>
+        <div class="control-note" id="currentControlNote"></div>
+      </article>
+    </section>
+
+    <section class="panel view" data-view-panel="future">
+      <h2 class="title">Future State</h2>
+      <p class="sub">Set target maturity and control policy to compare against current.</p>
+      <div class="state-grid">
+        <div class="stack">
+          <article class="card">
+            <h3>Maturity Mixer</h3>
+            <div class="mixers">
+              <div class="fader"><label>Generalize</label><button class="nudge" data-nudge-target="futureSynth" data-dir="up">+</button><input class="vertical" id="futureSynth" type="range" min="0" max="4" step="1" value="2"><button class="nudge" data-nudge-target="futureSynth" data-dir="down">-</button><div class="lvl" id="futureSynthLvl">L2</div></div>
+              <div class="fader"><label>Guidance</label><button class="nudge" data-nudge-target="futureSteer" data-dir="up">+</button><input class="vertical" id="futureSteer" type="range" min="0" max="4" step="1" value="2"><button class="nudge" data-nudge-target="futureSteer" data-dir="down">-</button><div class="lvl" id="futureSteerLvl">L2</div></div>
+              <div class="fader"><label>Learning</label><button class="nudge" data-nudge-target="futureLearn" data-dir="up">+</button><input class="vertical" id="futureLearn" type="range" min="0" max="4" step="1" value="2"><button class="nudge" data-nudge-target="futureLearn" data-dir="down">-</button><div class="lvl" id="futureLearnLvl">L2</div></div>
+            </div>
+            <div class="compat" id="futureCompat"></div>
+          </article>
+
+          <article class="card">
+            <h3>Commercial Outcome + Delta</h3>
+            <div class="deal-grid">
+              <div class="deal"><div>Recommended Price</div><div class="big" id="futurePrice">$0</div></div>
+              <div class="deal"><div>Expected Win</div><div class="big" id="futureWin">N/A</div></div>
+              <div class="deal"><div>Margin %</div><div class="big" id="futureMargin">0%</div></div>
+            </div>
+            <div class="deal" id="deltaBox">Delta vs Current: price +$0 | win +0 pts | margin +0 pts</div>
+          </article>
+
+        </div>
+
+        <article class="viz-wrap">
+          <div class="head-row"><h3 style="margin:0;font-size:.9rem;color:#3f3b34;">Model Behavior</h3><span class="hint">Hover minis for full preview</span></div>
+          <div class="mini-grid">
+            <div class="mini-card"><p class="k">Generalize</p><svg id="futureSynthMini" viewBox="0 0 220 90"></svg><div class="txt"><span class="label" style="color:var(--blue)">Generalize</span><span id="futureSynthText"></span></div></div>
+            <div class="mini-card"><p class="k">Guidance</p><svg id="futureSteerMini" viewBox="0 0 220 90"></svg><div class="txt"><span class="label" style="color:var(--amber)">Guidance</span><span id="futureSteerText"></span></div></div>
+            <div class="mini-card"><p class="k">Learning</p><svg id="futureLearnMini" viewBox="0 0 220 90"></svg><div class="txt"><span class="label" style="color:var(--green)">Learning</span><span id="futureLearnText"></span></div></div>
+          </div>
+          <div style="font-size:.82rem;color:#5f5a50;font-weight:700;">Why this price?</div>
+          <ul class="why" id="futureWhy"></ul>
+        </article>
+      </div>
+
+      <article class="card" style="margin-top:10px;">
+        <h3>Pricing Team Control Surface</h3>
+        <div class="control-grid">
+          <div class="ctrl" id="futureMarginFloorWrap"><span class="ctrl-badge">L0</span><span>Margin % Floor</span><input id="futureMarginFloor" type="range" min="5" max="40" step="1" value="24"><span class="v" id="futureMarginFloorVal">24%</span></div>
+          <div class="ctrl" id="futureSegAAdderWrap"><span class="ctrl-badge">L1</span><span>Segment A Adder (%)</span><input id="futureSegAAdder" type="range" min="-5" max="15" step="1" value="3"><span class="v" id="futureSegAAdderVal">3%</span></div>
+          <div class="ctrl" id="futureSegBAdderWrap"><span class="ctrl-badge">L1</span><span>Segment B Adder (%)</span><input id="futureSegBAdder" type="range" min="-5" max="15" step="1" value="2"><span class="v" id="futureSegBAdderVal">2%</span></div>
+          <div class="ctrl" id="futureLowInvAdderWrap"><span class="ctrl-badge">L2</span><span>Low Inventory Adder (%)</span><input id="futureLowInvAdder" type="range" min="0" max="15" step="1" value="6"><span class="v" id="futureLowInvAdderVal">6%</span></div>
+          <div class="ctrl" id="futureDaysSupplyWrap"><span class="ctrl-badge">L2</span><span>Days of Supply Threshold</span><input id="futureDaysSupply" type="range" min="5" max="120" step="5" value="45"><span class="v" id="futureDaysSupplyVal">45</span></div>
+          <div class="ctrl" id="futurePctUnderTestWrap"><span class="ctrl-badge">L3</span><span>% Transactions Under Test</span><input id="futurePctUnderTest" type="range" min="0" max="40" step="1" value="15"><span class="v" id="futurePctUnderTestVal">15%</span></div>
+          <div class="ctrl" id="futureTestPriceChangeWrap"><span class="ctrl-badge">L3</span><span>Test Price Change (%)</span><input id="futureTestPriceChange" type="range" min="-10" max="10" step="1" value="3"><span class="v" id="futureTestPriceChangeVal">3%</span></div>
+          <div class="ctrl" id="futureNumTestsWrap"><span class="ctrl-badge">L4</span><span># of Price Tests</span><input id="futureNumTests" type="range" min="0" max="30" step="1" value="10"><span class="v" id="futureNumTestsVal">10</span></div>
+          <div class="ctrl" id="futureTestRangeWrap"><span class="ctrl-badge">L4</span><span>Price Test Range (%)</span><input id="futureTestRange" type="range" min="1" max="20" step="1" value="8"><span class="v" id="futureTestRangeVal">8%</span></div>
+        </div>
+        <div class="control-note" id="futureControlNote"></div>
+      </article>
+    </section>
+
+    <section class="panel view" data-view-panel="matrix">
+      <h2 class="title">Full Maturity Matrix</h2>
+      <p class="sub">3 topics x 4 levels. Same visual language as the walkthrough.</p>
+      <div class="matrix-grid" id="matrixGrid"></div>
+    </section>
+  </main>
+
+  <div class="hover-preview" id="hoverPreview" aria-hidden="true">
+    <div class="head" id="hoverHead"></div>
+    <svg id="hoverSvg" viewBox="0 0 460 260"></svg>
+    <div class="desc" id="hoverDesc"></div>
+  </div>
+
+  <script>
+    const stateText = {
+      synth:[
+        "Formula/lookup baseline only.",
+        "Broad static peer-group baseline.",
+        "ML micro-segmentation with richer attributes.",
+        "ML win model linked to ML price model in priority segments.",
+        "Continuously recalibrated price + win models."
+      ],
+      steer:[
+        "Manual overrides and ad hoc judgment.",
+        "Static caps/floors/thresholds.",
+        "Systematic data-triggered rules.",
+        "Experiment-validated guidance and rule tuning.",
+        "Adaptive guidance with governance oversight."
+      ],
+      learn:[
+        "No formal test-and-learn loop.",
+        "KPI monitoring and periodic review only.",
+        "Pilots/phased rollouts with basic discipline.",
+        "Controlled holdouts and causal readouts.",
+        "Always-on experimentation and optimization."
+      ]
+    };
+    const matrixCopy = {
+      synth:[
+        {soWhat:"Fast to run, but too coarse for reliable WTP capture.",narrative:"Single broad anchor limits precision."},
+        {soWhat:"Consistency improves, though bins still hide variation.",narrative:"Segment medians replace one-size baseline."},
+        {soWhat:"Granularity expands with ML micro-segmentation.",narrative:"Local distributions create better price-point fit."},
+        {soWhat:"Price and win signals can guide decision support.",narrative:"p(price) and p(win) are linked in key segments."}
+      ],
+      steer:[
+        {soWhat:"Decisions depend on individual judgment.",narrative:"Manual overrides dominate policy behavior."},
+        {soWhat:"Risk is bounded, but policy is blunt.",narrative:"Static floors/caps/thresholds control outcomes."},
+        {soWhat:"Rules become repeatable and context-aware.",narrative:"Trigger-to-action flow governs adjustments."},
+        {soWhat:"Rules scale only when evidence supports them.",narrative:"Experiment gates decide promotion."}
+      ],
+      learn:[
+        {soWhat:"No reliable attribution of performance changes.",narrative:"No formal learning loop exists."},
+        {soWhat:"Signals are visible but causality remains weak.",narrative:"KPI monitoring without controlled tests."},
+        {soWhat:"Evidence quality improves with staged deployment.",narrative:"Pilots and phased rollouts reduce risk."},
+        {soWhat:"Causal deltas support confident scaling.",narrative:"Holdouts/readouts inform decisions."}
+      ]
+    };
+    const scenario={
+      current:{
+        synth:1,steer:1,learn:1,
+        marginFloor:22,segAAdder:2,segBAdder:1,lowInvAdder:4,daysSupply:35,pctUnderTest:10,testPriceChange:2,numTests:6,testRange:6
+      },
+      future:{
+        synth:2,steer:2,learn:2,
+        marginFloor:24,segAAdder:3,segBAdder:2,lowInvAdder:6,daysSupply:45,pctUnderTest:15,testPriceChange:3,numTests:10,testRange:8
+      },
+      diagnostic:{synth:1,steer:1,learn:1}
+    };
+    const ids=[
+      "q1","q2","q3","q4","listPrice","unitCost","dealPressure",
+      "currentSynth","currentSteer","currentLearn","futureSynth","futureSteer","futureLearn",
+      "currentMarginFloor","currentSegAAdder","currentSegBAdder","currentLowInvAdder","currentDaysSupply","currentPctUnderTest","currentTestPriceChange","currentNumTests","currentTestRange",
+      "futureMarginFloor","futureSegAAdder","futureSegBAdder","futureLowInvAdder","futureDaysSupply","futurePctUnderTest","futureTestPriceChange","futureNumTests","futureTestRange"
+    ];
+    const el=Object.fromEntries(ids.map(id=>[id,document.getElementById(id)]));
+    const out={
+      diagResult:document.getElementById("diagResult"),deltaPill:document.getElementById("deltaPill"),deltaBox:document.getElementById("deltaBox"),
+      listPriceVal:document.getElementById("listPriceVal"),unitCostVal:document.getElementById("unitCostVal"),dealPressureVal:document.getElementById("dealPressureVal"),
+      matrixGrid:document.getElementById("matrixGrid"),
+      hoverPreview:document.getElementById("hoverPreview"),hoverHead:document.getElementById("hoverHead"),hoverSvg:document.getElementById("hoverSvg"),hoverDesc:document.getElementById("hoverDesc")
+    };
+    ["current","future"].forEach(k=>{
+      ["SynthLvl","SteerLvl","LearnLvl","Compat","SynthMini","SteerMini","LearnMini","SynthText","SteerText","LearnText","Price","Win","Margin","Why","ControlNote",
+       "MarginFloorVal","SegAAdderVal","SegBAdderVal","LowInvAdderVal","DaysSupplyVal","PctUnderTestVal","TestPriceChangeVal","NumTestsVal","TestRangeVal",
+       "MarginFloorWrap","SegAAdderWrap","SegBAdderWrap","LowInvAdderWrap","DaysSupplyWrap","PctUnderTestWrap","TestPriceChangeWrap","NumTestsWrap","TestRangeWrap"
+      ].forEach(s=>out[`${k}${s}`]=document.getElementById(`${k}${s}`));
+    });
+    const navBtns=[...document.querySelectorAll(".nav-btn")],panels=[...document.querySelectorAll("[data-view-panel]")];
+    const runDiagnosticBtn=document.getElementById("runDiagnostic"),applyToCurrentBtn=document.getElementById("applyToCurrent");
+
+    const clamp=(x,a,b)=>Math.max(a,Math.min(b,x)),fmtMoney=v=>`$${Math.round(v).toLocaleString()}`,logistic=x=>1/(1+Math.exp(-x));
+
+    function compatibilityCheck(s,t,l){
+      const reasons=[];
+      if(l>=4&&s<=1)reasons.push("L4 Learning requires stronger Generalize maturity.");
+      if(l-s>=3)reasons.push("Learning is too far ahead of Generalize.");
+      if(l>=3&&t<=1)reasons.push("High Learning requires stronger Guidance governance.");
+      if(t-s>=3)reasons.push("Guidance automation is too far ahead of baseline quality.");
+      return{ok:reasons.length===0,reasons};
+    }
+
+    function drawTopicMini(svgEl,topic,level){
+      svgEl.innerHTML="";const ns="http://www.w3.org/2000/svg",mk=(t,a)=>{const n=document.createElementNS(ns,t);Object.entries(a||{}).forEach(([k,v])=>n.setAttribute(k,String(v)));svgEl.appendChild(n);return n};
+      const by=72,blue="#1d4ed8",amber="#b45309",green="#0f766e";mk("line",{x1:10,y1:by,x2:210,y2:by,stroke:"#b5ab9a","stroke-width":1});
+      if(topic==="synth"){
+        if(level===0){mk("path",{d:"M18 72 C42 70, 50 38, 110 38 C170 38, 178 70, 202 72",fill:"none",stroke:blue,"stroke-width":1.8});mk("line",{x1:110,y1:72,x2:110,y2:40,stroke:"#0f766e","stroke-width":1.3,"stroke-dasharray":"3 2"});}
+        else if(level===1){[{l:16,r:78,p:52},{l:82,r:144,p:48},{l:148,r:210,p:54}].forEach(s=>{const m=(s.l+s.r)/2;mk("path",{d:`M${s.l} 72 C${s.l+14} 70, ${s.l+20} ${s.p}, ${m} ${s.p} C${s.r-20} ${s.p}, ${s.r-14} 70, ${s.r} 72`,fill:"none",stroke:blue,"stroke-width":1.3});mk("line",{x1:m,y1:72,x2:m,y2:s.p+2,stroke:green,"stroke-width":1.1});});}
+        else if(level===2){const gx=14,gy=16,w=142,h=52,cw=w/3,ch=h/3;mk("rect",{x:gx,y:gy,width:w,height:h,fill:"#f8fbff",stroke:"#d5e1f8","stroke-width":1,rx:3});for(let r=0;r<3;r++)for(let c=0;c<3;c++){const x0=gx+c*cw+3,x1=gx+(c+1)*cw-3,y0=gy+(r+1)*ch-3,p=y0-10-((r+c)%3)*2;mk("path",{d:`M${x0} ${y0} C${x0+5} ${y0-1}, ${x0+6} ${p}, ${(x0+x1)/2} ${p} C${x1-6} ${p}, ${x1-5} ${y0-1}, ${x1} ${y0}`,fill:"none",stroke:blue,"stroke-width":0.9});mk("line",{x1:(x0+x1)/2,y1:y0,x2:(x0+x1)/2,y2:p+1,stroke:green,"stroke-width":0.8});}const hx=164,hy=16,hw=42,hh=52,hc=hw/3,hr=hh/3;mk("rect",{x:hx,y:hy,width:hw,height:hh,fill:"#f8fbff",stroke:"#d5e1f8","stroke-width":1,rx:3});for(let r=0;r<3;r++)for(let c=0;c<3;c++){const op=.2+(((r*2+c*3)%9)/8)*.7;mk("rect",{x:hx+c*hc+.6,y:hy+r*hr+.6,width:hc-1.2,height:hr-1.2,fill:blue,"fill-opacity":op.toFixed(2)});}}
+        else if(level===3){const lx=14,ly=16,lw=90,lh=52,rx=110,ry=16,rw=96,rh=52;mk("rect",{x:lx,y:ly,width:lw,height:lh,fill:"#f8fbff",stroke:"#d5e1f8","stroke-width":1,rx:3});mk("rect",{x:rx,y:ry,width:rw,height:rh,fill:"#f7fdf9",stroke:"#cfe3d8","stroke-width":1,rx:3});const hc=lw/3,hr=lh/3;for(let r=0;r<3;r++)for(let c=0;c<3;c++){const op=.2+(((r*2+c*3+2)%9)/8)*.7;mk("rect",{x:lx+c*hc+.5,y:ly+r*hr+.5,width:hc-1,height:hr-1,fill:blue,"fill-opacity":op.toFixed(2)});}mk("line",{x1:rx+8,y1:ry+rh-6,x2:rx+rw-8,y2:ry+rh-6,stroke:"#a59d8f","stroke-width":1});mk("line",{x1:rx+8,y1:ry+rh-6,x2:rx+8,y2:ry+6,stroke:"#a59d8f","stroke-width":1});const pts=[];for(let i=0;i<=18;i++){const t=i/18,x=rx+8+t*(rw-16),s=1/(1+Math.exp(10*(t-.5))),y=ry+rh-6-s*(rh-12);pts.push(`${i?"L":"M"}${x} ${y}`);}mk("path",{d:pts.join(" "),fill:"none",stroke:green,"stroke-width":1.5});}
+        else {const surf=(x0,sh)=>{mk("rect",{x:x0,y:16,width:92,height:52,fill:"#f8fbff",stroke:"#d5e1f8","stroke-width":1,rx:3});const cols=5,rows=3,cw=92/cols,ch=52/rows;for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){const op=.18+(((c*2+r*3+sh)%9)/8)*.6;mk("rect",{x:x0+c*cw+.5,y:16+r*ch+.5,width:cw-1,height:ch-1,fill:blue,"fill-opacity":op.toFixed(2)});}};surf(14,1);surf(114,4);mk("line",{x1:108,y1:42,x2:114,y2:42,stroke:green,"stroke-width":1.3});mk("path",{d:"M111 39 L114 42 L111 45",fill:"none",stroke:green,"stroke-width":1.3});}
+      } else if(topic==="steer"){
+        if(level===0){[30,64,98,132,166,200].forEach((x,i)=>{const y=50+(i%2?5:-2);mk("line",{x1:x-5,y1:y-5,x2:x+5,y2:y+5,stroke:amber,"stroke-width":1.3});mk("line",{x1:x-5,y1:y+5,x2:x+5,y2:y-5,stroke:amber,"stroke-width":1.3});});}
+        else if(level===1){mk("line",{x1:14,y1:30,x2:206,y2:30,stroke:amber,"stroke-width":1.3,"stroke-dasharray":"4 3"});mk("line",{x1:14,y1:58,x2:206,y2:58,stroke:amber,"stroke-width":1.3,"stroke-dasharray":"4 3"});for(let i=0;i<6;i++)mk("rect",{x:18+i*30,y:34,width:16,height:20,fill:amber,"fill-opacity":.22+i*.08});}
+        else if(level===2){mk("rect",{x:16,y:38,width:44,height:20,rx:8,fill:"#fff6ec",stroke:amber,"stroke-width":1});mk("path",{d:"M90 26 L114 42 L90 58 L66 42 Z",fill:"#fff6ec",stroke:amber,"stroke-width":1});mk("rect",{x:126,y:38,width:50,height:20,rx:3,fill:"#fff6ec",stroke:amber,"stroke-width":1});mk("rect",{x:186,y:38,width:24,height:20,rx:8,fill:"#fff6ec",stroke:amber,"stroke-width":1});[["60","84"],["114","126"],["176","186"]].forEach(([a,b])=>{mk("line",{x1:a,y1:48,x2:b,y2:48,stroke:amber,"stroke-width":1.2});mk("path",{d:`M${+b-4} 44 L${b} 48 L${+b-4} 52`,fill:"none",stroke:amber,"stroke-width":1.2});});}
+        else if(level===3){mk("rect",{x:24,y:28,width:34,height:44,fill:"#d9d5cd"});mk("rect",{x:72,y:18,width:34,height:54,fill:amber,"fill-opacity":.72});mk("line",{x1:89,y1:14,x2:89,y2:24,stroke:green,"stroke-width":1.2});mk("line",{x1:84,y1:14,x2:94,y2:14,stroke:green,"stroke-width":1.2});mk("line",{x1:84,y1:24,x2:94,y2:24,stroke:green,"stroke-width":1.2});mk("rect",{x:132,y:28,width:72,height:24,rx:4,fill:"#f1faf5",stroke:green,"stroke-width":1});mk("line",{x1:106,y1:34,x2:132,y2:40,stroke:green,"stroke-width":1.2});}
+        else {mk("rect",{x:12,y:10,width:196,height:60,rx:6,fill:"none",stroke:"#7e8a85","stroke-width":1,"stroke-dasharray":"4 3"});[[42,50],[88,30],[136,30],[180,50]].forEach(([x,y])=>mk("circle",{cx:x,cy:y,r:8,fill:"#f4fbf8",stroke:amber,"stroke-width":1.2}));["M50 46 L80 34","M96 30 L128 30","M144 34 L172 46","M172 56 C144 76, 78 76, 44 56"].forEach(d=>mk("path",{d,fill:"none",stroke:amber,"stroke-width":1.2}));}
+      } else {
+        if(level===0){mk("circle",{cx:110,cy:42,r:18,fill:"none",stroke:green,"stroke-width":1.5,"stroke-opacity":.7});mk("line",{x1:98,y1:30,x2:122,y2:54,stroke:green,"stroke-width":1.6});}
+        else if(level===1){mk("polyline",{points:"20,58 60,42 96,46 136,36 190,34",fill:"none",stroke:green,"stroke-width":1.5});[20,60,96,136,190].forEach(x=>mk("line",{x1:x,y1:62,x2:x,y2:68,stroke:"#9f9581","stroke-width":1}));}
+        else if(level===2){mk("rect",{x:20,y:56,width:36,height:10,fill:green,"fill-opacity":.28});mk("rect",{x:60,y:46,width:36,height:10,fill:green,"fill-opacity":.4});mk("rect",{x:100,y:36,width:36,height:10,fill:green,"fill-opacity":.55});mk("rect",{x:140,y:26,width:36,height:10,fill:green,"fill-opacity":.72});mk("path",{d:"M20 56 L56 56 L56 46 L96 46 L96 36 L136 36 L136 26 L176 26",fill:"none",stroke:green,"stroke-width":1.4});}
+        else if(level===3){mk("path",{d:"M20 58 C48 54, 80 42, 112 22",fill:"none",stroke:green,"stroke-width":1.6});mk("path",{d:"M20 58 C48 56, 80 50, 112 44",fill:"none",stroke:"#0f766e","stroke-width":1.6,"stroke-dasharray":"4 3"});mk("line",{x1:118,y1:20,x2:196,y2:20,stroke:"#9f9581","stroke-width":1});}
+        else {mk("path",{d:"M66 44 C66 26, 94 26, 94 44 C94 62, 122 62, 122 44 C122 26, 150 26, 150 44 C150 62, 178 62, 178 44",fill:"none",stroke:green,"stroke-width":1.8});mk("path",{d:"M178 44 L173 40 M178 44 L173 48",fill:"none",stroke:green,"stroke-width":1.8});}
+      }
+    }
+
+    function drawTopicFull(svg,topic,level){
+      // Render at native mini coordinate system so preview appears large/crisp.
+      svg.setAttribute("viewBox","0 0 220 90");
+      drawTopicMini(svg,topic,level);
+    }
+
+    function drawTopicFullDetailed(svgEl, topic, level) {
+      svgEl.innerHTML = "";
+      const ns = "http://www.w3.org/2000/svg";
+      const mk = (tag, attrs, text) => {
+        const n = document.createElementNS(ns, tag);
+        Object.entries(attrs || {}).forEach(([k, v]) => n.setAttribute(k, String(v)));
+        if (text) n.textContent = text;
+        svgEl.appendChild(n);
+        return n;
+      };
+      const blue = "#1d4ed8", amber = "#b45309", green = "#0f766e";
+      const baseY = 210;
+      svgEl.setAttribute("viewBox", "0 0 460 260");
+      mk("line", { x1: 24, y1: baseY, x2: 438, y2: baseY, stroke: "#a89e8f", "stroke-width": 1.2 });
+
+      if (topic === "synth") {
+        if (level === 0) {
+          const d = "M36 210 C88 206, 104 118, 230 118 C356 118, 372 206, 424 210";
+          mk("path", { d: `${d} L424 210 L36 210 Z`, fill: blue, "fill-opacity": 0.1 });
+          mk("path", { d, fill: "none", stroke: blue, "stroke-width": 3 });
+          mk("line", { x1: 230, y1: 210, x2: 230, y2: 124, stroke: green, "stroke-width": 2.4, "stroke-dasharray": "6 4" });
+          mk("text", { x: 246, y: 126, "font-size": 13, fill: "#5b564d" }, "Single median anchor");
+          mk("text", { x: 36, y: 232, "font-size": 13, fill: "#6c665b" }, "Broad willingness-to-pay distribution");
+        } else if (level === 1) {
+          const segs = [
+            { l: 38, r: 136, peak: 154, label: "Seg 1" },
+            { l: 146, r: 244, peak: 136, label: "Seg 2" },
+            { l: 254, r: 352, peak: 160, label: "Seg 3" },
+            { l: 362, r: 438, peak: 144, label: "Seg 4" }
+          ];
+          segs.forEach((s, i) => {
+            const m = (s.l + s.r) / 2;
+            const curve = `M${s.l} 210 C${s.l + 24} 208, ${s.l + 28} ${s.peak}, ${m} ${s.peak} C${s.r - 28} ${s.peak}, ${s.r - 24} 208, ${s.r} 210`;
+            mk("path", { d: `${curve} L${s.r} 210 L${s.l} 210 Z`, fill: blue, "fill-opacity": (0.06 + i * 0.025).toFixed(2) });
+            mk("path", { d: curve, fill: "none", stroke: blue, "stroke-width": 2.1, "stroke-opacity": (0.78 + i * 0.05).toFixed(2) });
+            mk("line", { x1: m, y1: 210, x2: m, y2: s.peak + 4, stroke: green, "stroke-width": 1.8 });
+            mk("text", { x: m - 16, y: 228, "font-size": 11, fill: "#6b655a" }, s.label);
+          });
+          mk("text", { x: 34, y: 122, "font-size": 13, fill: "#5b564d" }, "Static peer-group distributions with separate medians");
+        } else if (level === 2) {
+          const gx = 30, gy = 38, gw = 280, gh = 150, cw = gw / 3, ch = gh / 3;
+          mk("rect", { x: gx, y: gy, width: gw, height: gh, fill: "#f8fbff", stroke: "#d6e2f8", "stroke-width": 1.2, rx: 4 });
+          for (let r = 0; r < 3; r++) for (let c = 0; c < 3; c++) {
+            const x0 = gx + c * cw + 6, x1 = gx + (c + 1) * cw - 6, y0 = gy + (r + 1) * ch - 5, p = y0 - 24 - ((r + c) % 3) * 4;
+            mk("path", { d: `M${x0} ${y0} C${x0 + 10} ${y0 - 2}, ${x0 + 12} ${p}, ${(x0 + x1) / 2} ${p} C${x1 - 12} ${p}, ${x1 - 10} ${y0 - 2}, ${x1} ${y0}`, fill: "none", stroke: blue, "stroke-width": 1.3 });
+            mk("line", { x1: (x0 + x1) / 2, y1: y0, x2: (x0 + x1) / 2, y2: p + 2, stroke: green, "stroke-width": 1 });
+          }
+          const hx = 326, hy = 52, hw = 102, hh = 122, hc = hw / 3, hr = hh / 3;
+          mk("rect", { x: hx, y: hy, width: hw, height: hh, fill: "#f8fbff", stroke: "#d6e2f8", "stroke-width": 1.2, rx: 4 });
+          for (let r = 0; r < 3; r++) for (let c = 0; c < 3; c++) {
+            const op = 0.18 + (((r * 2 + c * 3 + 1) % 9) / 8) * 0.62;
+            mk("rect", { x: hx + c * hc + .6, y: hy + r * hr + .6, width: hc - 1.2, height: hr - 1.2, fill: blue, "fill-opacity": op.toFixed(2) });
+          }
+          mk("text", { x: 32, y: 30, "font-size": 12.5, fill: "#5b564d" }, "3x3 micro-segments with local distributions");
+          mk("text", { x: 330, y: 46, "font-size": 11.5, fill: "#5b564d" }, "Segment heatmap");
+        } else if (level === 3) {
+          const lx = 30, ly = 40, lw = 172, lh = 146, rx = 218, ry = 40, rw = 212, rh = 146;
+          mk("rect", { x: lx, y: ly, width: lw, height: lh, fill: "#f8fbff", stroke: "#d6e2f8", "stroke-width": 1.2, rx: 4 });
+          mk("rect", { x: rx, y: ry, width: rw, height: rh, fill: "#f7fdf9", stroke: "#cde2d7", "stroke-width": 1.2, rx: 4 });
+          const hc = lw / 3, hr = lh / 3;
+          for (let r = 0; r < 3; r++) for (let c = 0; c < 3; c++) {
+            const op = 0.18 + (((r * 2 + c * 3 + 2) % 9) / 8) * 0.62;
+            mk("rect", { x: lx + c * hc + .6, y: ly + r * hr + .6, width: hc - 1.2, height: hr - 1.2, fill: blue, "fill-opacity": op.toFixed(2) });
+          }
+          mk("line", { x1: rx + 16, y1: ry + rh - 12, x2: rx + rw - 14, y2: ry + rh - 12, stroke: "#a69d8e", "stroke-width": 1.1 });
+          mk("line", { x1: rx + 16, y1: ry + rh - 12, x2: rx + 16, y2: ry + 12, stroke: "#a69d8e", "stroke-width": 1.1 });
+          const pts = [];
+          for (let i = 0; i <= 26; i++) {
+            const t = i / 26, x = rx + 16 + t * (rw - 30), s = 1 / (1 + Math.exp(10 * (t - 0.5))), y = ry + rh - 12 - s * (rh - 24);
+            pts.push(`${i ? "L" : "M"}${x} ${y}`);
+          }
+          mk("path", { d: pts.join(" "), fill: "none", stroke: green, "stroke-width": 2.3 });
+          mk("text", { x: 34, y: 30, "font-size": 12.5, fill: "#5b564d" }, "p(price)");
+          mk("text", { x: 222, y: 30, "font-size": 12.5, fill: "#5b564d" }, "p(win)");
+        } else {
+          const drawSurf = (x0, shift, label) => {
+            mk("rect", { x: x0, y: 44, width: 190, height: 142, fill: "#f8fbff", stroke: "#d6e2f8", "stroke-width": 1.2, rx: 4 });
+            const cols = 6, rows = 4, cw = 190 / cols, ch = 142 / rows;
+            for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+              const op = 0.16 + (((c * 2 + r * 3 + shift) % 9) / 8) * 0.62;
+              mk("rect", { x: x0 + c * cw + .5, y: 44 + r * ch + .5, width: cw - 1, height: ch - 1, fill: blue, "fill-opacity": op.toFixed(2) });
+            }
+            mk("text", { x: x0 + 6, y: 34, "font-size": 12, fill: "#5b564d" }, label);
+          };
+          drawSurf(30, 1, "Surface at t-1");
+          drawSurf(240, 4, "Recalibrated at t");
+          mk("line", { x1: 222, y1: 116, x2: 238, y2: 116, stroke: green, "stroke-width": 2.2 });
+          mk("path", { d: "M232 110 L238 116 L232 122", fill: "none", stroke: green, "stroke-width": 2.2 });
+        }
+      } else if (topic === "steer") {
+        const label = [
+          "Manual overrides",
+          "Static guardrails",
+          "Trigger-to-action flow",
+          "Experiment gate for rule promotion",
+          "Adaptive loop with governance boundary"
+        ][level];
+        mk("text", { x: 30, y: 28, "font-size": 12.5, fill: "#5b564d" }, label);
+
+        if (level === 0) {
+          [60, 120, 180, 240, 300, 360, 420].forEach((x, i) => {
+            const y = 140 + (i % 2 ? 8 : -2);
+            mk("line", { x1: x - 10, y1: y - 10, x2: x + 10, y2: y + 10, stroke: amber, "stroke-width": 2.1 });
+            mk("line", { x1: x - 10, y1: y + 10, x2: x + 10, y2: y - 10, stroke: amber, "stroke-width": 2.1 });
+          });
+          mk("text", { x: 34, y: 226, "font-size": 11.5, fill: "#6b655a" }, "Ad hoc overrides; low policy consistency");
+        } else if (level === 1) {
+          mk("line", { x1: 40, y1: 88, x2: 430, y2: 88, stroke: amber, "stroke-width": 2.1, "stroke-dasharray": "8 6" });
+          mk("line", { x1: 40, y1: 166, x2: 430, y2: 166, stroke: amber, "stroke-width": 2.1, "stroke-dasharray": "8 6" });
+          for (let i = 0; i < 7; i++) mk("rect", { x: 48 + i * 54, y: 100, width: 32, height: 54, fill: amber, "fill-opacity": 0.2 + i * 0.08 });
+          mk("text", { x: 44, y: 80, "font-size": 11.5, fill: "#6b655a" }, "Upper guardrail");
+          mk("text", { x: 44, y: 182, "font-size": 11.5, fill: "#6b655a" }, "Lower guardrail");
+        } else if (level === 2) {
+          mk("rect", { x: 38, y: 118, width: 86, height: 36, rx: 14, fill: "#fff6ec", stroke: amber, "stroke-width": 1.8 });
+          mk("path", { d: "M176 86 L224 136 L176 186 L128 136 Z", fill: "#fff6ec", stroke: amber, "stroke-width": 1.8 });
+          mk("rect", { x: 250, y: 118, width: 98, height: 36, rx: 5, fill: "#fff6ec", stroke: amber, "stroke-width": 1.8 });
+          mk("rect", { x: 370, y: 118, width: 56, height: 36, rx: 14, fill: "#fff6ec", stroke: amber, "stroke-width": 1.8 });
+          [["124","152"],["224","250"],["348","370"]].forEach(([a,b]) => {
+            mk("line", { x1: a, y1: 136, x2: b, y2: 136, stroke: amber, "stroke-width": 2 });
+            mk("path", { d: `M${+b-8} 130 L${b} 136 L${+b-8} 142`, fill: "none", stroke: amber, "stroke-width": 2 });
+          });
+          mk("text", { x: 50, y: 112, "font-size": 11, fill: "#6b655a" }, "Trigger");
+          mk("text", { x: 148, y: 106, "font-size": 11, fill: "#6b655a" }, "Condition?");
+          mk("text", { x: 276, y: 112, "font-size": 11, fill: "#6b655a" }, "Rule");
+          mk("text", { x: 382, y: 112, "font-size": 11, fill: "#6b655a" }, "Quote");
+        } else if (level === 3) {
+          mk("line", { x1: 38, y1: 206, x2: 286, y2: 206, stroke: "#b8ad9b", "stroke-width": 1.2 });
+          mk("rect", { x: 86, y: 124, width: 56, height: 82, fill: "#d9d5cd" });
+          mk("rect", { x: 160, y: 90, width: 56, height: 116, fill: amber, "fill-opacity": .8 });
+          mk("line", { x1: 188, y1: 76, x2: 188, y2: 100, stroke: green, "stroke-width": 2 });
+          mk("line", { x1: 178, y1: 76, x2: 198, y2: 76, stroke: green, "stroke-width": 2 });
+          mk("line", { x1: 178, y1: 100, x2: 198, y2: 100, stroke: green, "stroke-width": 2 });
+          mk("rect", { x: 320, y: 108, width: 114, height: 52, rx: 7, fill: "#f1faf5", stroke: green, "stroke-width": 1.5 });
+          mk("text", { x: 332, y: 130, "font-size": 12, fill: "#5b564d" }, "Promotion Gate");
+          mk("text", { x: 334, y: 146, "font-size": 10.5, fill: "#6b655a" }, "Ship only if lift is stable");
+          mk("line", { x1: 216, y1: 108, x2: 320, y2: 132, stroke: green, "stroke-width": 2 });
+        } else {
+          mk("rect", { x: 34, y: 54, width: 392, height: 146, rx: 8, fill: "none", stroke: "#7e8a85", "stroke-width": 1.5, "stroke-dasharray": "7 5" });
+          [[90,154],[164,104],[236,104],[320,154]].forEach(([x,y]) => mk("circle", { cx: x, cy: y, r: 16, fill: "#f4fbf8", stroke: amber, "stroke-width": 2 }));
+          ["M106 146 L146 114","M180 104 L220 104","M252 114 L302 146","M304 170 C250 212, 164 212, 106 170"].forEach((d)=>mk("path",{d,fill:"none",stroke:amber,"stroke-width":2.2}));
+          mk("text", { x: 42, y: 50, "font-size": 11.5, fill: "#5b564d" }, "Governance boundary");
+          mk("text", { x: 38, y: 226, "font-size": 11.5, fill: "#6b655a" }, "Adaptive loop constrained by approvals/compliance");
+        }
+      } else {
+        const label = [
+          "No formal learning loop",
+          "KPI monitoring",
+          "Pilot/phased rollouts",
+          "Holdout-based causal evidence",
+          "Always-on optimization loop"
+        ][level];
+        mk("text", { x: 30, y: 28, "font-size": 12.5, fill: "#5b564d" }, label);
+
+        if (level === 0) {
+          mk("circle", { cx: 230, cy: 132, r: 52, fill: "none", stroke: green, "stroke-width": 2.8, "stroke-opacity": 0.75 });
+          mk("line", { x1: 194, y1: 96, x2: 266, y2: 168, stroke: green, "stroke-width": 3 });
+          mk("text", { x: 150, y: 226, "font-size": 11.5, fill: "#6b655a" }, "No attribution confidence");
+        } else if (level === 1) {
+          mk("polyline", { points: "40,184 122,136 198,148 284,118 412,110", fill: "none", stroke: green, "stroke-width": 2.4 });
+          [40,122,198,284,412].forEach((x)=>mk("line",{x1:x,y1:194,x2:x,y2:206,stroke:"#9f9581","stroke-width":1.1}));
+          mk("text", { x: 44, y: 226, "font-size": 11.5, fill: "#6b655a" }, "KPI trend visibility, weak causality");
+        } else if (level === 2) {
+          mk("rect", { x: 42, y: 174, width: 64, height: 18, fill: green, "fill-opacity": 0.28 });
+          mk("rect", { x: 112, y: 152, width: 64, height: 18, fill: green, "fill-opacity": 0.42 });
+          mk("rect", { x: 182, y: 130, width: 64, height: 18, fill: green, "fill-opacity": 0.58 });
+          mk("rect", { x: 252, y: 108, width: 64, height: 18, fill: green, "fill-opacity": 0.74 });
+          mk("path", { d: "M42 174 L106 174 L106 152 L176 152 L176 130 L246 130 L246 108 L316 108", fill: "none", stroke: green, "stroke-width": 2.2 });
+          mk("text", { x: 44, y: 226, "font-size": 11.5, fill: "#6b655a" }, "Rollout stair-step improves evidence quality");
+        } else if (level === 3) {
+          mk("path", { d: "M34 190 C112 174, 192 146, 272 84", fill: "none", stroke: green, "stroke-width": 2.5 });
+          mk("path", { d: "M34 190 C112 182, 192 168, 272 154", fill: "none", stroke: green, "stroke-width": 2.5, "stroke-dasharray": "8 5" });
+          mk("line", { x1: 286, y1: 78, x2: 428, y2: 78, stroke: "#9f9581", "stroke-width": 1.1 });
+          mk("text", { x: 290, y: 72, "font-size": 11.5, fill: "#5b564d" }, "Delta from holdout");
+          mk("text", { x: 34, y: 226, "font-size": 11.5, fill: "#6b655a" }, "Causal signal supports policy decisions");
+        } else {
+          mk("path", { d: "M110 138 C110 88, 184 88, 184 138 C184 188, 258 188, 258 138 C258 88, 332 88, 332 138 C332 188, 406 188, 406 138", fill: "none", stroke: green, "stroke-width": 3.2 });
+          mk("path", { d: "M406 138 L392 126 M406 138 L392 150", fill: "none", stroke: green, "stroke-width": 3 });
+          mk("text", { x: 34, y: 226, "font-size": 11.5, fill: "#6b655a" }, "Always-on experimentation compounds gains");
+        }
+      }
+    }
+
+    function calcOutcome(k){
+      const s=+scenario[k].synth,t=+scenario[k].steer,l=+scenario[k].learn;
+      const list=+el.listPrice.value,cost=+el.unitCost.value,pressure=+el.dealPressure.value/100;
+      const marginFloor=+scenario[k].marginFloor,segAAdder=+scenario[k].segAAdder,segBAdder=+scenario[k].segBAdder;
+      const lowInvAdder=+scenario[k].lowInvAdder,daysSupply=+scenario[k].daysSupply,pctUnderTest=+scenario[k].pctUnderTest;
+      const testPriceChange=+scenario[k].testPriceChange,numTests=+scenario[k].numTests,testRange=+scenario[k].testRange;
+      const precision=.3+s*.16,governance=.25+t*.17,evidence=.2+l*.18;
+      let policyProtection=(marginFloor/100)*.08+governance*.06+precision*.05;
+      // Segment proxy from pressure (higher pressure -> more B-like in this toy sim).
+      const segmentAdder = pressure > 0.5 ? segBAdder : segAAdder;
+      // Days-of-supply proxy from pressure for demo behavior.
+      const inferredDaysSupply = Math.round(20 + (1 - pressure) * 90);
+      const lowInventoryActive = inferredDaysSupply <= daysSupply;
+      // Test intensity proxy from configured test controls.
+      const testIntensity = (pctUnderTest/100) * (Math.abs(testPriceChange)/10) + (numTests/30) * (testRange/20);
+
+      if (t >= 1) policyProtection += segmentAdder/100 * 0.5;
+      if (t >= 2 && lowInventoryActive) policyProtection += lowInvAdder/100 * 0.55;
+      if (t >= 3) policyProtection += testIntensity * 0.06;
+      if (t >= 4) policyProtection += (numTests/30) * 0.05 + (testRange/20) * 0.04;
+
+      const demand=.08+pressure*.22;
+      let discount=clamp(demand-policyProtection,.02,.35);
+      const dynamicCap = clamp((30 - marginFloor) / 100 + 0.12, 0.04, 0.3);
+      discount=Math.min(discount,dynamicCap);
+      const price=list*(1-discount);
+      const winInput=1.6-(price/list)*2.2+pressure*1.2+evidence*.65+testIntensity*0.2;
+      const winUnderlying=clamp(logistic(winInput),.06,.94);
+      const winModelAvailable=s>=3;
+      const win=winModelAvailable?winUnderlying:null;
+      const margin=clamp((price-cost)/price,-.3,.8);
+      const logic=[
+        `Generalize L${s} sets baseline precision.`,
+        `Guidance L${t} applies active controls (segment adders, inventory rules, and test levers by maturity).`,
+        `Learning L${l} sets confidence and exploration discipline.`,
+        winModelAvailable?"Win model is active at this maturity (L3+).":"Win model is not active at L0-L2; expected win is N/A.",
+        `Build-up: <strong>${fmtMoney(list)}</strong> - <strong>${(discount*100).toFixed(1)}%</strong> = <strong>${fmtMoney(price)}</strong>.`
+      ];
+      return{price,win,winUnderlying,margin,logic};
+    }
+
+    function renderScenario(k){
+      const s=+scenario[k].synth,t=+scenario[k].steer,l=+scenario[k].learn;
+      out[`${k}SynthLvl`].textContent=`L${s}`;out[`${k}SteerLvl`].textContent=`L${t}`;out[`${k}LearnLvl`].textContent=`L${l}`;
+      out[`${k}MarginFloorVal`].textContent=`${scenario[k].marginFloor}%`;
+      out[`${k}SegAAdderVal`].textContent=`${scenario[k].segAAdder}%`;
+      out[`${k}SegBAdderVal`].textContent=`${scenario[k].segBAdder}%`;
+      out[`${k}LowInvAdderVal`].textContent=`${scenario[k].lowInvAdder}%`;
+      out[`${k}DaysSupplyVal`].textContent=String(scenario[k].daysSupply);
+      out[`${k}PctUnderTestVal`].textContent=`${scenario[k].pctUnderTest}%`;
+      out[`${k}TestPriceChangeVal`].textContent=`${scenario[k].testPriceChange}%`;
+      out[`${k}NumTestsVal`].textContent=String(scenario[k].numTests);
+      out[`${k}TestRangeVal`].textContent=`${scenario[k].testRange}%`;
+      out[`${k}SynthText`].textContent=stateText.synth[s];
+      out[`${k}SteerText`].textContent=stateText.steer[t];
+      out[`${k}LearnText`].textContent=stateText.learn[l];
+      out[`${k}SynthMini`].dataset.state=k;out[`${k}SteerMini`].dataset.state=k;out[`${k}LearnMini`].dataset.state=k;
+      out[`${k}SynthMini`].dataset.topic="synth";out[`${k}SteerMini`].dataset.topic="steer";out[`${k}LearnMini`].dataset.topic="learn";
+      out[`${k}SynthMini`].dataset.level=s;out[`${k}SteerMini`].dataset.level=t;out[`${k}LearnMini`].dataset.level=l;
+      drawTopicMini(out[`${k}SynthMini`],"synth",s);drawTopicMini(out[`${k}SteerMini`],"steer",t);drawTopicMini(out[`${k}LearnMini`],"learn",l);
+      const compat=compatibilityCheck(s,t,l);const c=out[`${k}Compat`];c.classList.toggle("bad",!compat.ok);c.textContent=compat.ok?"Compatibility: feasible combination.":`Compatibility: not feasible. ${compat.reasons[0]}`;
+
+      // Maturity-aware control surface visibility
+      const wraps = [
+        "MarginFloorWrap","SegAAdderWrap","SegBAdderWrap","LowInvAdderWrap","DaysSupplyWrap",
+        "PctUnderTestWrap","TestPriceChangeWrap","NumTestsWrap","TestRangeWrap"
+      ];
+      wraps.forEach((w)=>out[`${k}${w}`].classList.add("control-hidden"));
+      const activeControls = [];
+      out[`${k}MarginFloorWrap`].classList.remove("control-hidden");
+      activeControls.push("Margin % Floor");
+      if (t >= 1) {
+        out[`${k}SegAAdderWrap`].classList.remove("control-hidden");
+        out[`${k}SegBAdderWrap`].classList.remove("control-hidden");
+        activeControls.push("Segment A Adder", "Segment B Adder");
+      }
+      if (t >= 2) {
+        out[`${k}LowInvAdderWrap`].classList.remove("control-hidden");
+        out[`${k}DaysSupplyWrap`].classList.remove("control-hidden");
+        activeControls.push("Low Inventory Adder", "Days of Supply Threshold");
+      }
+      if (t >= 3) {
+        out[`${k}PctUnderTestWrap`].classList.remove("control-hidden");
+        out[`${k}TestPriceChangeWrap`].classList.remove("control-hidden");
+        activeControls.push("% Transactions Under Test", "Test Price Change %");
+      }
+      if (t >= 4) {
+        out[`${k}NumTestsWrap`].classList.remove("control-hidden");
+        out[`${k}TestRangeWrap`].classList.remove("control-hidden");
+        activeControls.push("# of Price Tests", "Price Test Range");
+      }
+      out[`${k}ControlNote`].textContent = activeControls.length
+        ? `Active controls at this maturity: ${activeControls.join(", ")}.`
+        : "No advanced control levers are active at this maturity yet.";
+
+      const r=calcOutcome(k);
+      out[`${k}Price`].textContent=fmtMoney(r.price);out[`${k}Win`].textContent=r.win==null?"N/A":`${Math.round(r.win*100)}%`;out[`${k}Margin`].textContent=`${Math.round(r.margin*100)}%`;
+      out[`${k}Why`].innerHTML=r.logic.map(x=>`<li>${x}</li>`).join("");
+      return{...r,compat};
+    }
+
+    function refreshAll(){
+      out.listPriceVal.textContent=fmtMoney(+el.listPrice.value);out.unitCostVal.textContent=fmtMoney(+el.unitCost.value);out.dealPressureVal.textContent=String(el.dealPressure.value);
+      const cur=renderScenario("current"),fut=renderScenario("future");
+      const dPrice=fut.price-cur.price,dWin=(fut.winUnderlying-cur.winUnderlying)*100,dMargin=(fut.margin-cur.margin)*100;
+      const msg=`Delta: price ${dPrice>=0?"+":""}${fmtMoney(dPrice)} | win ${dWin>=0?"+":""}${Math.round(dWin)} pts | margin ${dMargin>=0?"+":""}${Math.round(dMargin)} pts`;
+      out.deltaPill.textContent=msg;
+      out.deltaBox.textContent=`${msg}${(!cur.compat.ok||!fut.compat.ok)?" (illustrative: infeasible combo selected)":""}`;
+    }
+
+    function renderMatrix(){
+      out.matrixGrid.innerHTML="";
+      const topics=[
+        {key:"synth",label:"GENERALIZE"},
+        {key:"steer",label:"GUIDANCE"},
+        {key:"learn",label:"LEARNING"}
+      ];
+
+      // Editable per-cell assessments for Harvey balls (0-100) + hover reasoning.
+      const capabilityAssessments = {
+        synth: [
+          {
+            ml: { score: 0, reason: "Mostly formula/list logic with minimal statistical modeling." },
+            ai: { score: 0, reason: "No AI-specific inference or automation in baseline creation." },
+            strategy: { score: 70, reason: "Pricing strategy still drives outcomes through manual policy intent." }
+          },
+          {
+            ml: { score: 0, reason: "Rule-based peer group baselines are structured but not fully model-driven." },
+            ai: { score: 0, reason: "No AI layer beyond static segmentation rules." },
+            strategy: { score: 75, reason: "Strategy strongly shapes segmentation definitions and guardrails." }
+          },
+          {
+            ml: { score: 50, reason: "Micro-segmentation ML materially determines baseline price points." },
+            ai: { score: 0, reason: "Limited AI-style automation; mostly classic supervised modeling." },
+            strategy: { score: 80, reason: "Strategy still selects features, constraints, and deployment boundaries." }
+          },
+          {
+            ml: { score: 100, reason: "Linked p(price) and p(win) models become core decision support." },
+            ai: { score: 0, reason: "AI-like adaptive recommendation behavior appears in scoped segments." },
+            strategy: { score: 25, reason: "Strategic governance remains critical for target-setting and scale decisions." }
+          }
+        ],
+        steer: [
+          {
+            ml: { score: 0, reason: "Guidance is manual; no model-driven policy execution." },
+            ai: { score: 0, reason: "No AI-assisted policy control at this level." },
+            strategy: { score: 5, reason: "Human strategic judgment dominates day-to-day guidance." }
+          },
+          {
+            ml: { score: 10, reason: "Very light analytics may inform static thresholds, but minimally." },
+            ai: { score: 0, reason: "No AI control layer in static rules." },
+            strategy: { score: 20, reason: "Policy intent and governance are primarily strategy-led." }
+          },
+          {
+            ml: { score: 10, reason: "Data-triggered rules use model/analytics signals for execution." },
+            ai: { score: 50, reason: "Some adaptive behavior, but still mostly deterministic rule logic." },
+            strategy: { score: 20, reason: "Strategic priorities define precedence, boundaries, and exceptions." }
+          },
+          {
+            ml: { score: 25, reason: "Experiment readouts tune guidance logic in a measured loop." },
+            ai: { score: 100, reason: "More adaptive optimization signals begin influencing policy updates." },
+            strategy: { score: 25, reason: "Strategy governs what gets promoted, scaled, or rolled back." }
+          }
+        ],
+        learn: [
+          {
+            ml: { score: 0, reason: "No formal learning system is in place." },
+            ai: { score: 0, reason: "No AI-driven experimentation or continuous optimization." },
+            strategy: { score: 10, reason: "Strategic review may exist, but evidence loop is weak." }
+          },
+          {
+            ml: { score: 10, reason: "Basic metric tracking supports retrospective assessment." },
+            ai: { score: 0, reason: "No AI experimentation pipeline yet." },
+            strategy: { score: 65, reason: "Strategy interprets KPI trends and sets next actions." }
+          },
+          {
+            ml: { score: 50, reason: "Pilot/phase design introduces stronger data discipline." },
+            ai: { score: 50, reason: "Some intelligent experimentation support, but limited automation." },
+            strategy: { score: 75, reason: "Strategy decides rollout gates, risk appetite, and scope." }
+          },
+          {
+            ml: { score: 100, reason: "Holdouts and causal readouts provide model-quality learning signals." },
+            ai: { score: 100, reason: "Automation can prioritize tests and optimize candidate policies." },
+            strategy: { score: 50, reason: "Strategy directs portfolio-level experimentation and scaling choices." }
+          }
+        ]
+      };
+
+      topics.forEach((topic)=>{
+        const lane=document.createElement("section");
+        lane.className="matrix-lane";
+        lane.innerHTML=`<div class="lane-head ${topic.key}">${topic.label}</div>`;
+
+        [0,1,2,3].forEach(level=>{
+          const desc=topic.key==="synth"?stateText.synth[level]:topic.key==="steer"?stateText.steer[level]:stateText.learn[level];
+          const m=capabilityAssessments[topic.key][level];
+          const card=document.createElement("article");
+          card.className="matrix-card";
+          card.innerHTML=`
+            <div class="matrix-head"><span>L${level}</span></div>
+            <div class="matrix-desc">${desc}</div>
+            <svg class="matrix-svg" viewBox="0 0 220 90"></svg>
+            <div class="cap-row">
+              <span class="cap" title="ML ${m.ml.score}%: ${m.ml.reason}">
+                <span class="harvey" style="--p:${m.ml.score}" title="ML ${m.ml.score}%: ${m.ml.reason}"></span>ML
+              </span>
+              <span class="cap" title="AI ${m.ai.score}%: ${m.ai.reason}">
+                <span class="harvey" style="--p:${m.ai.score}" title="AI ${m.ai.score}%: ${m.ai.reason}"></span>AI
+              </span>
+              <span class="cap" title="Strategy ${m.strategy.score}%: ${m.strategy.reason}">
+                <span class="harvey" style="--p:${m.strategy.score}" title="Strategy ${m.strategy.score}%: ${m.strategy.reason}"></span>Strategy
+              </span>
+            </div>
+            <div class="matrix-copy">
+              <div><b>So what:</b> ${matrixCopy[topic.key][level].soWhat}</div>
+              <div><b>Narrative:</b> ${matrixCopy[topic.key][level].narrative}</div>
+            </div>
+          `;
+          drawTopicMini(card.querySelector("svg"),topic.key,level);
+          lane.appendChild(card);
+        });
+        out.matrixGrid.appendChild(lane);
+      });
+    }
+
+    function runDiagnostic(){
+      const q1=+el.q1.value,q2=+el.q2.value,q3=+el.q3.value,q4=+el.q4.value;
+      scenario.diagnostic.synth=clamp(Math.round(.65*q1+.35*q4),0,4);
+      scenario.diagnostic.steer=clamp(Math.round(.75*q2+.25*q4),0,4);
+      scenario.diagnostic.learn=clamp(Math.round(.75*q3+.25*q4),0,4);
+      out.diagResult.textContent=`Result: Generalize L${scenario.diagnostic.synth} | Guidance L${scenario.diagnostic.steer} | Learning L${scenario.diagnostic.learn}`;
+    }
+    function applyToCurrent(){
+      scenario.current.synth=scenario.diagnostic.synth;scenario.current.steer=scenario.diagnostic.steer;scenario.current.learn=scenario.diagnostic.learn;
+      el.currentSynth.value=String(scenario.current.synth);el.currentSteer.value=String(scenario.current.steer);el.currentLearn.value=String(scenario.current.learn);
+      if(+el.futureSynth.value<scenario.current.synth)el.futureSynth.value=String(scenario.current.synth);
+      if(+el.futureSteer.value<scenario.current.steer)el.futureSteer.value=String(scenario.current.steer);
+      if(+el.futureLearn.value<scenario.current.learn)el.futureLearn.value=String(scenario.current.learn);
+      syncFromInputs();
+    }
+
+    function syncFromInputs(){
+      scenario.current.synth=+el.currentSynth.value;scenario.current.steer=+el.currentSteer.value;scenario.current.learn=+el.currentLearn.value;
+      scenario.future.synth=+el.futureSynth.value;scenario.future.steer=+el.futureSteer.value;scenario.future.learn=+el.futureLearn.value;
+      scenario.current.marginFloor=+el.currentMarginFloor.value;
+      scenario.current.segAAdder=+el.currentSegAAdder.value;
+      scenario.current.segBAdder=+el.currentSegBAdder.value;
+      scenario.current.lowInvAdder=+el.currentLowInvAdder.value;
+      scenario.current.daysSupply=+el.currentDaysSupply.value;
+      scenario.current.pctUnderTest=+el.currentPctUnderTest.value;
+      scenario.current.testPriceChange=+el.currentTestPriceChange.value;
+      scenario.current.numTests=+el.currentNumTests.value;
+      scenario.current.testRange=+el.currentTestRange.value;
+
+      scenario.future.marginFloor=+el.futureMarginFloor.value;
+      scenario.future.segAAdder=+el.futureSegAAdder.value;
+      scenario.future.segBAdder=+el.futureSegBAdder.value;
+      scenario.future.lowInvAdder=+el.futureLowInvAdder.value;
+      scenario.future.daysSupply=+el.futureDaysSupply.value;
+      scenario.future.pctUnderTest=+el.futurePctUnderTest.value;
+      scenario.future.testPriceChange=+el.futureTestPriceChange.value;
+      scenario.future.numTests=+el.futureNumTests.value;
+      scenario.future.testRange=+el.futureTestRange.value;
+      refreshAll();
+    }
+
+    function placePreview(x,y){
+      const box=out.hoverPreview,p=12,w=box.offsetWidth||420,h=box.offsetHeight||300;let nx=x+16,ny=y+16;
+      if(nx+w+p>window.innerWidth)nx=x-w-16; if(ny+h+p>window.innerHeight)ny=window.innerHeight-h-p; if(nx<p)nx=p; if(ny<p)ny=p;
+      box.style.left=`${nx}px`;box.style.top=`${ny}px`;
+    }
+    function showPreview(svg,x,y){
+      const topic=svg.dataset.topic,level=Number(svg.dataset.level||0),state=svg.dataset.state==="future"?"Future State":"Current State";
+      const t=topic==="synth"?"Generalize":topic==="steer"?"Guidance":"Learning";
+      out.hoverHead.textContent=`${state} · ${t} · L${level} (full preview)`;
+      out.hoverDesc.textContent=(topic==="synth"?stateText.synth[level]:topic==="steer"?stateText.steer[level]:stateText.learn[level]);
+      drawTopicFullDetailed(out.hoverSvg,topic,level); out.hoverPreview.style.display="block"; out.hoverPreview.setAttribute("aria-hidden","false"); placePreview(x,y);
+    }
+    function hidePreview(){out.hoverPreview.style.display="none";out.hoverPreview.setAttribute("aria-hidden","true");}
+    function bindPreview(svg){svg.addEventListener("mouseenter",e=>showPreview(svg,e.clientX,e.clientY));svg.addEventListener("mousemove",e=>placePreview(e.clientX,e.clientY));svg.addEventListener("mouseleave",hidePreview);svg.addEventListener("focus",()=>{const r=svg.getBoundingClientRect();showPreview(svg,r.left+r.width/2,r.top+r.height/2)});svg.addEventListener("blur",hidePreview);}
+
+    const validViews=new Set(["diagnostic","current","future","matrix"]);
+    const getView=()=>{const h=(window.location.hash||"").replace("#","").toLowerCase();return validViews.has(h)?h:"diagnostic";};
+    function setActive(view){navBtns.forEach(b=>b.classList.toggle("active",b.dataset.view===view));panels.forEach(p=>p.classList.toggle("active",p.dataset.viewPanel===view));}
+    navBtns.forEach(btn=>btn.addEventListener("click",()=>{const v=btn.dataset.view;if(window.location.hash!==`#${v}`)window.location.hash=v;else setActive(v);}));
+    window.addEventListener("hashchange",()=>setActive(getView()));
+
+    [
+      el.currentSynth,el.currentSteer,el.currentLearn,el.futureSynth,el.futureSteer,el.futureLearn,
+      el.currentMarginFloor,el.currentSegAAdder,el.currentSegBAdder,el.currentLowInvAdder,el.currentDaysSupply,el.currentPctUnderTest,el.currentTestPriceChange,el.currentNumTests,el.currentTestRange,
+      el.futureMarginFloor,el.futureSegAAdder,el.futureSegBAdder,el.futureLowInvAdder,el.futureDaysSupply,el.futurePctUnderTest,el.futureTestPriceChange,el.futureNumTests,el.futureTestRange,
+      el.listPrice,el.unitCost,el.dealPressure
+    ].forEach(n=>n.addEventListener("input",syncFromInputs));
+    [...document.querySelectorAll("[data-nudge-target]")].forEach(btn=>btn.addEventListener("click",()=>{const t=document.getElementById(btn.dataset.nudgeTarget),dir=btn.dataset.dir==="up"?1:-1;t.value=String(clamp(+t.value+dir,+t.min,+t.max));syncFromInputs();}));
+    runDiagnosticBtn.addEventListener("click",runDiagnostic);
+    applyToCurrentBtn.addEventListener("click",applyToCurrent);
+
+    ["currentSynthMini","currentSteerMini","currentLearnMini","futureSynthMini","futureSteerMini","futureLearnMini"].forEach(id=>bindPreview(document.getElementById(id)));
+
+    runDiagnostic(); syncFromInputs(); renderMatrix();
+    if(!window.location.hash||!validViews.has(window.location.hash.replace("#","").toLowerCase()))window.location.hash="diagnostic";
+    setActive(getView());
+  </script>
+</body>
+</html>

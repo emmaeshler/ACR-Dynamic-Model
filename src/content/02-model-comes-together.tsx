@@ -34,37 +34,39 @@ function ModelBuildingVisual() {
   );
 }
 
-/* ── Low depth ── */
+/* ── Low depth: Visual hero + short caption ── */
 export function ModelComesLow() {
   return (
-    <div className="space-y-3">
-      <h3 className="text-lg font-semibold tracking-tight">We combine your data, market intelligence, and our expertise.</h3>
-      <p className="text-sm leading-relaxed text-muted-foreground">
-        Three inputs produce one smart output. Your transaction history tells us what has happened.
-        Market and competitive signals tell us what is happening right now. INSIGHT2PROFIT&apos;s
-        industry expertise tells us what to look for — and what most companies miss. The model
-        synthesizes all three into pricing recommendations no single source could produce alone.
+    <div className="space-y-4">
+      <div className="rounded-lg border bg-muted/30 p-6">
+        <ModelBuildingVisual />
+      </div>
+      <p className="text-center text-sm text-muted-foreground">
+        Three inputs — your data, market intelligence, and our expertise — produce one smart output.
       </p>
     </div>
   );
 }
 
-/* ── Medium depth ── */
+/* ── Medium depth: Narrative explanation ── */
 export function ModelComesMedium() {
   return (
     <div className="space-y-4">
-      <h3 className="text-lg font-semibold tracking-tight">Three streams, one model</h3>
+      <h3 className="text-lg font-semibold tracking-tight">We combine your data, market intelligence, and our expertise.</h3>
       <p className="text-sm leading-relaxed text-muted-foreground">
-        The model is only as good as what feeds it. Client transaction history provides the ground
-        truth — actual prices, volumes, win/loss outcomes, and customer behavior patterns. Market
-        and competitive signals add context: commodity indices, competitor price moves, supply-demand
-        shifts. INSIGHT2PROFIT&apos;s expertise is the third stream — decades of pricing engagements
-        encoded as feature selection, weighting heuristics, and domain-specific guardrails that
-        prevent the model from learning the wrong lessons.
+        Your transaction history tells us what has happened. Market and competitive signals tell us
+        what is happening right now. INSIGHT2PROFIT&apos;s industry expertise tells us what to look
+        for — and what most companies miss. The model synthesizes all three into pricing
+        recommendations no single source could produce alone.
       </p>
-      <div className="mt-4 rounded-lg border bg-muted/30 p-4">
-        <ModelBuildingVisual />
-      </div>
+      <p className="text-sm leading-relaxed text-muted-foreground">
+        Client transaction history provides the ground truth — actual prices, volumes, win/loss
+        outcomes, and customer behavior patterns. Market and competitive signals add context:
+        commodity indices, competitor price moves, supply-demand shifts. INSIGHT2PROFIT&apos;s
+        expertise is the third stream — decades of pricing engagements encoded as feature selection,
+        weighting heuristics, and domain-specific guardrails that prevent the model from learning
+        the wrong lessons.
+      </p>
     </div>
   );
 }
@@ -74,9 +76,6 @@ export function ModelComesHigh() {
   return (
     <div className="space-y-5">
       <h3 className="text-lg font-semibold tracking-tight">Feature engineering and pipeline architecture</h3>
-      <div className="mt-4 rounded-lg border bg-muted/30 p-4">
-        <ModelBuildingVisual />
-      </div>
       <div className="space-y-3 text-sm leading-relaxed text-muted-foreground">
         <p>
           <strong className="font-semibold text-foreground">Client transaction data</strong> is the

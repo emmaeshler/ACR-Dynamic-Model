@@ -42,38 +42,36 @@ function ModelRunningVisual() {
   );
 }
 
-/* ── Low depth ── */
+/* ── Low depth: Visual hero + short caption ── */
 export function ModelRunningLow() {
   return (
-    <div className="space-y-3">
-      <h3 className="text-lg font-semibold tracking-tight">More data means better prices.</h3>
-      <p className="text-sm leading-relaxed text-muted-foreground">
-        Every transaction that flows through the model makes it smarter. It learns which prices
-        win deals, which lose them, and which leave money on the table. The result is pricing that
-        gets more precise over time — not a static formula, but a living system that improves
-        with every data point.
+    <div className="space-y-4">
+      <div className="rounded-lg border bg-muted/30 p-6">
+        <ModelRunningVisual />
+      </div>
+      <p className="text-center text-sm text-muted-foreground">
+        Every transaction makes the model smarter. More data, better prices.
       </p>
     </div>
   );
 }
 
-/* ── Medium depth ── */
+/* ── Medium depth: Narrative explanation ── */
 export function ModelRunningMedium() {
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-semibold tracking-tight">Each dot is a real price point</h3>
       <p className="text-sm leading-relaxed text-muted-foreground">
-        The scatter plot tells the story better than a revenue chart. Each orange dot is an actual
-        transaction — a real price set for a real customer. The blue curve is the model&apos;s
-        learned pricing function, fitted to your data. As more transactions flow through, the
-        curve tightens. The green callouts highlight the key outcome: differentiation. Prices are
-        tailored to each engagement, not applied as a blanket markup. Two customers buying the same
-        product may get different prices based on volume, relationship tenure, competitive
-        alternatives, and dozens of other factors the model has learned to weigh.
+        Each orange dot is an actual transaction — a real price set for a real customer. The blue
+        curve is the model&apos;s learned pricing function, fitted to your data. As more transactions
+        flow through, the curve tightens. The green callouts highlight the key outcome:
+        differentiation. Prices are tailored to each engagement, not applied as a blanket markup.
       </p>
-      <div className="mt-4 rounded-lg border bg-muted/30 p-4">
-        <ModelRunningVisual />
-      </div>
+      <p className="text-sm leading-relaxed text-muted-foreground">
+        Two customers buying the same product may get different prices based on volume, relationship
+        tenure, competitive alternatives, and dozens of other factors the model has learned to weigh.
+        It learns which prices win deals, which lose them, and which leave money on the table.
+      </p>
     </div>
   );
 }
@@ -83,9 +81,6 @@ export function ModelRunningHigh() {
   return (
     <div className="space-y-5">
       <h3 className="text-lg font-semibold tracking-tight">Training convergence and differentiation metrics</h3>
-      <div className="mt-4 rounded-lg border bg-muted/30 p-4">
-        <ModelRunningVisual />
-      </div>
       <div className="space-y-3 text-sm leading-relaxed text-muted-foreground">
         <p>
           <strong className="font-semibold text-foreground">Curve fitting.</strong>{" "}
@@ -113,15 +108,6 @@ export function ModelRunningHigh() {
           are genuinely tailored to each transaction&apos;s context. We validate that this variance
           is signal, not noise, by confirming that higher-priced recommendations correlate with
           lower price sensitivity segments (measured by historical volume elasticity).
-        </p>
-        <p>
-          <strong className="font-semibold text-foreground">What &ldquo;better&rdquo; means mathematically.</strong>{" "}
-          Improvement is measured on three axes: (1) margin capture rate — the percentage of
-          available margin the recommended price captures vs. market benchmarks, (2) win rate
-          stability — maintaining or improving close rates while raising prices, and (3) prediction
-          accuracy — how close the model&apos;s expected outcome matches the actual transaction
-          outcome. All three must improve together; optimizing margin at the expense of win rate
-          is not &ldquo;better.&rdquo;
         </p>
       </div>
     </div>

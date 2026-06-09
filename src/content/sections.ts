@@ -11,35 +11,76 @@ export interface SectionDefinition {
 }
 
 import { ProblemLow, ProblemMedium, ProblemHigh } from "./01-the-problem";
-import { ModelComesLow, ModelComesMedium, ModelComesHigh } from "./02-model-comes-together";
-import { WhyMLLow, WhyMLMedium, WhyMLHigh } from "./03-why-ml-not-genai";
-import { ModelRunningLow, ModelRunningMedium, ModelRunningHigh } from "./04-model-running";
-import { ComplicationLow, ComplicationMedium, ComplicationHigh } from "./05-complication";
-import { LessonLow, LessonMedium, LessonHigh } from "./06-lesson-opportunity";
-import { ImprovedRecLow, ImprovedRecMedium, ImprovedRecHigh } from "./07-improved-recommendation";
+import { DDILow, DDIMedium, DDIHigh } from "./02-finding-structure";
+import { EnvFactorsLow, EnvFactorsMedium, EnvFactorsHigh } from "./03-environmental-factors";
+import { IndustryExpLow, IndustryExpMedium, IndustryExpHigh } from "./04-industry-expertise";
+import { InHouseExpLow, InHouseExpMedium, InHouseExpHigh } from "./05-in-house-expertise";
+import { OneModelLow, OneModelMedium, OneModelHigh } from "./06-one-model";
+import { WhyMLLow, WhyMLMedium, WhyMLHigh } from "./07-why-ml-not-genai";
+import { OptimalCurveLow, OptimalCurveMedium, OptimalCurveHigh } from "./08-optimal-curve";
+import { MarketShiftLow, MarketShiftMedium, MarketShiftHigh } from "./09-market-shift";
+import { FeedbackLoopLow, FeedbackLoopMedium, FeedbackLoopHigh } from "./10-feedback-loop";
+import { PricingStructuresLow, PricingStructuresMedium, PricingStructuresHigh } from "./11-pricing-structures";
+import { MaturityLow, MaturityMedium, MaturityHigh } from "./12-maturity";
 
 export const sections: SectionDefinition[] = [
   {
     slug: "the-problem",
     order: 1,
     title: "The Problem",
-    caption: "No model. Pricing isn’t learning or adapting.",
+    caption: "No model. Pricing isn't learning or adapting.",
     low: ProblemLow,
     medium: ProblemMedium,
     high: ProblemHigh,
   },
   {
-    slug: "model-comes-together",
+    slug: "finding-structure",
     order: 2,
-    title: "How the Model Comes Together",
-    caption: "Client data + environmental signals → ML.",
-    low: ModelComesLow,
-    medium: ModelComesMedium,
-    high: ModelComesHigh,
+    title: "Finding Structure in the Data",
+    caption: "Same product, wildly different prices — the structure is hiding.",
+    low: DDILow,
+    medium: DDIMedium,
+    high: DDIHigh,
+  },
+  {
+    slug: "environmental-factors",
+    order: 3,
+    title: "Environmental Factors",
+    caption: "Your price looks optimal — until you see where competitors landed.",
+    low: EnvFactorsLow,
+    medium: EnvFactorsMedium,
+    high: EnvFactorsHigh,
+  },
+  {
+    slug: "industry-expertise",
+    order: 4,
+    title: "Our Industry Expertise",
+    caption: "List price isn't pocket price. We know where to look.",
+    low: IndustryExpLow,
+    medium: IndustryExpMedium,
+    high: IndustryExpHigh,
+  },
+  {
+    slug: "in-house-expertise",
+    order: 5,
+    title: "Your In-House Expertise",
+    caption: "Your rules and strategy bend the math to fit your business.",
+    low: InHouseExpLow,
+    medium: InHouseExpMedium,
+    high: InHouseExpHigh,
+  },
+  {
+    slug: "one-model",
+    order: 6,
+    title: "One Model",
+    caption: "Four inputs converge into one deterministic engine.",
+    low: OneModelLow,
+    medium: OneModelMedium,
+    high: OneModelHigh,
   },
   {
     slug: "why-ml-not-genai",
-    order: 3,
+    order: 7,
     title: "Why ML, Not Gen AI",
     caption: "Deterministic, not probabilistic.",
     low: WhyMLLow,
@@ -47,39 +88,48 @@ export const sections: SectionDefinition[] = [
     high: WhyMLHigh,
   },
   {
-    slug: "model-running",
-    order: 4,
-    title: "The Model Running",
+    slug: "optimal-curve",
+    order: 8,
+    title: "The Optimal Curve",
     caption: "More transactions, better curve fit.",
-    low: ModelRunningLow,
-    medium: ModelRunningMedium,
-    high: ModelRunningHigh,
+    low: OptimalCurveLow,
+    medium: OptimalCurveMedium,
+    high: OptimalCurveHigh,
   },
   {
-    slug: "complication",
-    order: 5,
-    title: "Complication",
-    caption: "Something changes — the model sees it.",
-    low: ComplicationLow,
-    medium: ComplicationMedium,
-    high: ComplicationHigh,
+    slug: "market-shift",
+    order: 9,
+    title: "When the Market Shifts",
+    caption: "Something changes — the model sees it first.",
+    low: MarketShiftLow,
+    medium: MarketShiftMedium,
+    high: MarketShiftHigh,
   },
   {
-    slug: "lesson-opportunity",
-    order: 6,
-    title: "Lesson + Opportunity",
-    caption: "The model trains on itself and gets smarter.",
-    low: LessonLow,
-    medium: LessonMedium,
-    high: LessonHigh,
+    slug: "feedback-loop",
+    order: 10,
+    title: "It Learns",
+    caption: "Every outcome feeds the next cycle.",
+    low: FeedbackLoopLow,
+    medium: FeedbackLoopMedium,
+    high: FeedbackLoopHigh,
   },
   {
-    slug: "improved-recommendation",
-    order: 7,
-    title: "Improved Recommendation",
-    caption: "Comes back around — better than before.",
-    low: ImprovedRecLow,
-    medium: ImprovedRecMedium,
-    high: ImprovedRecHigh,
+    slug: "pricing-structures",
+    order: 11,
+    title: "Pricing Structures",
+    caption: "Three structures, increasing precision.",
+    low: PricingStructuresLow,
+    medium: PricingStructuresMedium,
+    high: PricingStructuresHigh,
+  },
+  {
+    slug: "maturity",
+    order: 12,
+    title: "Maturity & Path Forward",
+    caption: "Where you are and where you're headed.",
+    low: MaturityLow,
+    medium: MaturityMedium,
+    high: MaturityHigh,
   },
 ];

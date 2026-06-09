@@ -73,11 +73,25 @@ function ImprovedRecVisual() {
   );
 }
 
-/* ── Low depth ── */
+/* ── Low depth: Visual hero + short caption ── */
 export function ImprovedRecLow() {
   return (
-    <div className="space-y-3">
-      <h3 className="text-lg font-semibold tracking-tight">Better results every cycle — tighter, smarter, ready to approve.</h3>
+    <div className="space-y-4">
+      <div className="rounded-lg border bg-muted/30 p-6">
+        <ImprovedRecVisual />
+      </div>
+      <p className="text-center text-sm text-muted-foreground">
+        Better results every cycle — tighter, smarter, ready to approve.
+      </p>
+    </div>
+  );
+}
+
+/* ── Medium depth: Narrative explanation ── */
+export function ImprovedRecMedium() {
+  return (
+    <div className="space-y-4">
+      <h3 className="text-lg font-semibold tracking-tight">Tighter bands, higher confidence</h3>
       <p className="text-sm leading-relaxed text-muted-foreground">
         This is the payoff. Each time the model retrains, recommendations get more precise.
         Confidence intervals narrow. Fewer prices need manual adjustment. The pre-call strategy
@@ -85,31 +99,12 @@ export function ImprovedRecLow() {
         the data supports. Over time, the system requires less human intervention and delivers
         more value.
       </p>
-    </div>
-  );
-}
-
-/* ── Medium depth ── */
-export function ImprovedRecMedium() {
-  return (
-    <div className="space-y-4">
-      <h3 className="text-lg font-semibold tracking-tight">Tighter bands, higher confidence</h3>
       <p className="text-sm leading-relaxed text-muted-foreground">
-        The chart shows the improvement trajectory across retraining cycles. Early on, the
-        confidence band is wide — the model is still learning and its recommendations carry
-        significant uncertainty. With each cycle, the band tightens as the model incorporates
-        more outcomes, more overrides, and more market data. The green dots track actual
-        recommendation accuracy, climbing steadily. The end state is a recommendation that
-        arrives with a narrow confidence interval — the reviewer can trust it, approve it quickly,
-        and focus their energy on the edge cases that genuinely need human judgment.
-      </p>
-      <div className="mt-4 rounded-lg border bg-muted/30 p-4">
-        <ImprovedRecVisual />
-      </div>
-      <p className="text-sm leading-relaxed text-muted-foreground">
-        The pre-call strategy is the final deliverable: a concise brief with the recommended price,
-        the key drivers behind it, objection-handling talking points, and competitive context —
-        everything a rep needs to walk into a customer conversation prepared.
+        Early on, the confidence band is wide — the model is still learning and its recommendations
+        carry significant uncertainty. With each cycle, the band tightens as the model incorporates
+        more outcomes, more overrides, and more market data. The end state is a recommendation
+        that arrives with a narrow confidence interval — the reviewer can trust it, approve it
+        quickly, and focus their energy on the edge cases that genuinely need human judgment.
       </p>
     </div>
   );
@@ -120,19 +115,14 @@ export function ImprovedRecHigh() {
   return (
     <div className="space-y-5">
       <h3 className="text-lg font-semibold tracking-tight">Validation, confidence intervals, and the &ldquo;ready to approve&rdquo; threshold</h3>
-      <div className="mt-4 rounded-lg border bg-muted/30 p-4">
-        <ImprovedRecVisual />
-      </div>
       <div className="space-y-3 text-sm leading-relaxed text-muted-foreground">
         <p>
           <strong className="font-semibold text-foreground">Before/after metrics.</strong>{" "}
           We measure improvement across four dimensions with each retraining cycle. Margin capture
           rate typically improves from 60-65% in cycle one to 80-90% by cycle four. Win rate
           stability is maintained within a 2-percentage-point band even as prices increase.
-          Override rate — the percentage of recommendations adjusted by reps before use — drops
-          from 40-50% initially to 10-15% at maturity. Price consistency (coefficient of variation
-          across reps for the same scenario) improves by 30-40%, meaning less arbitrary pricing
-          variance across the sales team.
+          Override rate drops from 40-50% initially to 10-15% at maturity. Price consistency
+          improves by 30-40%, meaning less arbitrary pricing variance across the sales team.
         </p>
         <p>
           <strong className="font-semibold text-foreground">Confidence intervals.</strong>{" "}
@@ -140,18 +130,15 @@ export function ImprovedRecHigh() {
           this interval may span 8-12% of the recommended price (e.g., $100 +/- $5). At maturity,
           it narrows to 2-4%. The interval width is computed from the ensemble&apos;s prediction
           variance across its constituent trees — a natural measure of model uncertainty for that
-          specific input. Wider intervals flag the recommendation for human review; narrow intervals
-          indicate high confidence.
+          specific input.
         </p>
         <p>
           <strong className="font-semibold text-foreground">A/B validation.</strong>{" "}
           Before a retrained model fully replaces the prior version, we run a controlled rollout.
           A random subset of engagements (typically 20-30%) receives recommendations from the new
-          model while the rest continues on the current model. We compare outcomes — margin captured,
-          win rate, and customer acceptance — over a two-week window. The new model must show
-          statistically significant improvement (p &lt; 0.05) on at least one primary metric without
-          degradation on the others. This prevents regression and ensures every deployment is a
-          genuine step forward.
+          model while the rest continues on the current model. We compare outcomes over a two-week
+          window. The new model must show statistically significant improvement (p &lt; 0.05) on at
+          least one primary metric without degradation on the others.
         </p>
         <p>
           <strong className="font-semibold text-foreground">What &ldquo;ready to approve&rdquo; means.</strong>{" "}
@@ -159,10 +146,7 @@ export function ImprovedRecHigh() {
           (1) the prediction interval is within the configured threshold for that product segment,
           (2) the recommendation passes all business rule checks (margin floors, contractual limits,
           anti-trust constraints), and (3) the model&apos;s confidence score for that specific
-          input exceeds the segment-level threshold. Recommendations that meet all three conditions
-          can be auto-approved or fast-tracked through a single reviewer. Those that miss any
-          condition are routed to a full review workflow with the specific gap highlighted for
-          the analyst.
+          input exceeds the segment-level threshold.
         </p>
       </div>
     </div>

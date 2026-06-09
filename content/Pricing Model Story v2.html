@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>INSIGHT2PROFIT · How we build a pricing model</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --brand-navy: #0B4F79;
+    --brand-navy-deep: #062F49;
+    --brand-navy-ink: #0A2335;
+    --brand-orange: #EA6A0A;
+    --brand-orange-deep: #B14E03;
+    --brand-light-blue: #E4EEF5;
+    --brand-light-orange: #F6E6D5;
+    --brand-bg: #F4F4F1;
+    --brand-bg-deep: #ECECE7;
+    --brand-surface: #FFFFFF;
+    --brand-text: #11212E;
+    --brand-text-muted: #5B6A77;
+    --brand-text-soft: #8A97A2;
+    --brand-divider: #DCDCD5;
+    --brand-hairline: #C9C9C0;
+    --grid-line: #DCDCD5;
+    --grid-line-soft: #E8E8E2;
+    --font: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, Consolas, monospace;
+    --ease: cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--brand-bg);
+    color: var(--brand-text);
+    font-family: var(--font);
+    font-size: 15px;
+    line-height: 1.5;
+    height: 100vh;
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+  button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+  }
+
+  .app-shell {
+    width: 100%; height: 100vh; max-width: 1440px; margin: 0 auto;
+    padding: 22px 44px 20px;
+    display: grid; grid-template-rows: auto 1fr auto; gap: 18px;
+  }
+
+  /* topbar */
+  .topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding-bottom: 14px; border-bottom: 1px solid var(--brand-hairline);
+  }
+  .wordmark { font-weight: 700; font-size: 16px; letter-spacing: 0.06em; color: var(--brand-navy);
+    display: flex; align-items: center; gap: 10px; }
+  .wordmark span { color: var(--brand-orange); }
+  .wordmark::before { content: ''; width: 12px; height: 12px; background: var(--brand-orange); border-radius: 2px; }
+  .top-meta { display: flex; align-items: center; gap: 20px; }
+  .beat-counter { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.12em;
+    color: var(--brand-text-muted); text-transform: uppercase; }
+  .beat-counter strong { color: var(--brand-navy); font-weight: 600; }
+  .arrow-hint { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--brand-text-soft); display: flex; align-items: center; gap: 6px; }
+  .arrow-hint kbd { display: inline-block; padding: 1px 6px; border: 1px solid var(--brand-divider);
+    border-bottom-width: 2px; border-radius: 3px; background: var(--brand-surface);
+    font-family: var(--font-mono); font-size: 10px; color: var(--brand-text); }
+  .arrow-hint.pulse kbd { background: var(--brand-orange); color: #fff; border-color: var(--brand-orange);
+    animation: hintPulse 1.2s var(--ease) infinite; }
+  @keyframes hintPulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+
+  /* main two-pane */
+  .main { display: grid; grid-template-columns: 1.32fr 1fr; gap: 28px; min-height: 0; }
+  .left-pane { display: flex; flex-direction: column; min-height: 0; gap: 14px; }
+  .right-pane { display: flex; align-items: center; justify-content: center; min-height: 0;
+    border-left: 1px solid var(--brand-hairline); padding-left: 22px; }
+
+  /* narrative */
+  .narrative { display: grid; grid-template-columns: auto 1fr; gap: 6px 26px; align-items: baseline;
+    min-height: 124px; }
+  .eyebrow { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--brand-orange); font-weight: 600; grid-column: 1; grid-row: 1 / span 2; align-self: start;
+    padding-top: 8px; border-top: 2px solid var(--brand-orange); min-width: 132px; }
+  .headline { font-size: 29px; font-weight: 600; color: var(--brand-navy-ink); letter-spacing: -0.018em;
+    line-height: 1.12; grid-column: 2; grid-row: 1; text-wrap: balance; }
+  .caption { font-size: 14.5px; color: var(--brand-text-muted); grid-column: 2; grid-row: 2;
+    max-width: 62ch; text-wrap: pretty; }
+  .narrative.empty { min-height: 124px; }
+  .nfade { animation: textIn 420ms var(--ease) both; }
+  @keyframes textIn { from { opacity: 0; transform: translateY(7px); } to { opacity: 1; transform: none; } }
+
+  /* stage area */
+  .stage-area { position: relative; flex: 1; min-height: 0; }
+  .stage-svg { width: 100%; height: 100%; display: block; }
+  .viz-mount { animation: vizIn 420ms var(--ease) both; }
+  @keyframes vizIn { from { opacity: 0; } to { opacity: 1; } }
+
+  /* intro overlay */
+  .intro-stage { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center;
+    gap: 16px; padding: 4px 8px; }
+  .intro-row { display: grid; grid-template-columns: auto 1fr; gap: 18px; align-items: start;
+    padding: 14px 0; border-top: 1px solid var(--brand-divider); animation: introRow 500ms var(--ease) both; }
+  .intro-row:first-child { border-top: none; }
+  @keyframes introRow { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: none; } }
+  .intro-num { font-family: var(--font-mono); font-size: 14px; font-weight: 700; display: flex;
+    align-items: center; gap: 12px; padding-top: 3px; }
+  .intro-swatch { width: 14px; height: 14px; border-radius: 3px; display: inline-block; }
+  .intro-name { font-size: 20px; font-weight: 600; color: var(--brand-navy-ink); letter-spacing: -0.01em; }
+  .intro-line { font-size: 14px; color: var(--brand-text-muted); margin-top: 2px; }
+
+  /* close card */
+  .close-card { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center;
+    justify-content: center; gap: 18px; animation: vizIn 600ms var(--ease) both; }
+  .close-rule { width: 48px; height: 3px; background: var(--brand-orange); }
+  .close-word { font-size: 52px; font-weight: 700; letter-spacing: 0.02em; color: var(--brand-navy-ink); }
+  .close-word span { color: var(--brand-orange); }
+  .close-sub { font-size: 17px; color: var(--brand-text-muted); }
+
+  /* progress */
+  .progress { display: flex; align-items: stretch; width: 100%; gap: 6px; list-style: none; }
+  .progress li { flex: 1; display: flex; flex-direction: column; gap: 5px; cursor: pointer; }
+  .progress .seg-track { display: flex; gap: 2px; height: 3px; }
+  .progress .seg-cell { flex: 1; background: var(--brand-divider); transition: background 200ms var(--ease); }
+  .progress .seg-cell.past { background: var(--brand-navy); }
+  .progress .seg-cell.current { background: var(--brand-orange); }
+  .progress .seg-label { font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--brand-text-soft); line-height: 1.3; white-space: nowrap;
+    overflow: hidden; text-overflow: ellipsis; transition: color 200ms var(--ease); }
+  .progress li.active .seg-label { color: var(--brand-navy); font-weight: 600; }
+  .progress li:hover .seg-label { color: var(--brand-navy); }
+
+  @media (max-width: 920px) {
+    .main { grid-template-columns: 1fr; }
+    .right-pane { display: none; }
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel" src="js-v2/shared.jsx"></script>
+<script type="text/babel" src="js-v2/pie.jsx"></script>
+<script type="text/babel" src="js-v2/stage-intro.jsx"></script>
+<script type="text/babel" src="js-v2/ch1-ddi.jsx"></script>
+<script type="text/babel" src="js-v2/ch2-ef.jsx"></script>
+<script type="text/babel" src="js-v2/ch3-iexp.jsx"></script>
+<script type="text/babel" src="js-v2/ch4-yie.jsx"></script>
+<script type="text/babel" src="js-v2/ch5-converge.jsx"></script>
+
+<script type="text/babel" data-presets="react">
+const { useState, useEffect, useCallback } = React;
+
+const BEATS = [
+  { ch: 'intro', vs: null, eyebrow: 'How we build a pricing model',
+    headline: "A great pricing model isn't built from one input.",
+    caption: "It's built from four — your own deal history, the world outside your four walls, what we've learned across the industry, and what you know about your own business. Each is a real input. Each shapes the price." },
+
+  { ch: 'ddi', vs: 'chaos', eyebrow: 'Data Driven Insights',
+    headline: 'Same product. Wildly different prices.',
+    caption: "Your own deal history hides structure you can't see by eye. About 500 deals of the same product at similar volumes — and prices all over the map." },
+  { ch: 'ddi', vs: 'regions-color', eyebrow: 'Data Driven Insights',
+    headline: 'What if we colored the dots by region?',
+    caption: 'Label every deal with where it shipped — California, PNW, Southwest, Great Plains — and structure starts to emerge in the same scatter.' },
+  { ch: 'ddi', vs: 'regions-jitter', eyebrow: 'Data Driven Insights',
+    headline: 'Region is a statistically significant pricing driver.',
+    caption: 'California averages $172. Great Plains averages $96. Spread the same deals into a column per region and four distinct price distributions separate out — the variance has real structure.' },
+  { ch: 'ddi', vs: 'grid-all', eyebrow: 'Data Driven Insights',
+    headline: 'Region was one of sixteen things we tested.',
+    caption: 'The model tests every attribute on a deal — region, channel, order size, customer tier, and more — for whether it actually moves price. Most show no signal at all.' },
+  { ch: 'ddi', vs: 'grid-significant', eyebrow: 'Data Driven Insights',
+    headline: 'Four drivers explain most of the variance.',
+    caption: 'Region · Order Size · Customer Tier · Channel. Twelve attributes turn out to be noise. These four become the transactional pricing drivers your model uses.' },
+
+  { ch: 'ef', vs: 'isolation', eyebrow: 'Environmental Factors',
+    headline: 'Inside your four walls, the price looks optimal.',
+    caption: 'On its own, $4.84 looks like a healthy price — solid margin, steady win rate. Nothing inside your own numbers says otherwise.' },
+  { ch: 'ef', vs: 'competitor', eyebrow: 'Environmental Factors',
+    headline: 'Then you look at where competitors landed.',
+    caption: 'Drop the competitor price cloud onto the same axis — 28 quotes for the same SKU — and your $4.84 is sitting well above where the market actually settled. Same number, different position.' },
+  { ch: 'ef', vs: 'feeds', eyebrow: 'Environmental Factors',
+    headline: 'Competitor prices. Input costs. Market indices.',
+    caption: 'The model watches three external feeds continuously — including published benchmarks like the Producer Price Index from the BLS. Together they turn a number from "optimal" into "optimal for what the world looks like today."' },
+  { ch: 'ef', vs: 'retune', eyebrow: 'Environmental Factors',
+    headline: 'When the world shifts, the price shifts with it.',
+    caption: 'A competitor cuts and the whole market band slides down. Your price re-anchors to it automatically — no rebuild, no project. The external feeds keep the answer current.' },
+
+  { ch: 'iexp', vs: 'list', eyebrow: 'Our Industry Expertise',
+    headline: 'List price is where most analyses stop.',
+    caption: "The number on the quote and the invoice is the easy one to look at — and it's where most pricing analyses start and end." },
+  { ch: 'iexp', vs: 'waterfall', eyebrow: 'Our Industry Expertise',
+    headline: 'But a few leaks sit between list and what you keep.',
+    caption: 'Every transaction passes through a handful of leaks — volume rebates, freight allowances, payment-term discounts, expired-quote re-pricing, return adjustments. Each shaves off a little; together they add up.' },
+  { ch: 'iexp', vs: 'pocket', eyebrow: 'Our Industry Expertise',
+    headline: "The pocket price is what's left.",
+    caption: 'What actually lands on your P&L is the pocket price — typically 12 to 18% below list. That\u2019s the number we model. That\u2019s the number we optimize.' },
+  { ch: 'iexp', vs: 'rerank', eyebrow: 'Our Industry Expertise',
+    headline: "We know where to look — we've measured it across the industry.",
+    caption: "One client hadn't noticed a 4% expired-quote leak until we mapped it. Having seen these patterns across many businesses, we know which leaks usually matter most — and where to start." },
+
+  { ch: 'yie', vs: 'math', eyebrow: 'Your In-House Expertise',
+    headline: 'Run unconstrained, the math has an opinion on every deal.',
+    caption: 'Every quote lands on its mathematical sweet spot. Clean. Even. Decisive. Also: detached from how you actually run the business.' },
+  { ch: 'yie', vs: 'hard', eyebrow: 'Your In-House Expertise',
+    headline: "But you have rules the math can't see.",
+    caption: 'This MAP floor was negotiated with your distributors. These accounts are locked under a 12-month contract. This product has a manufacturer minimum. The math doesn\u2019t know any of that. You do.' },
+  { ch: 'yie', vs: 'strategy', eyebrow: 'Your In-House Expertise',
+    headline: "And you have strategy the math doesn't have.",
+    caption: '"We\u2019re pushing for share in the Southwest." "These customers are critical to our top-line story this year." "We will not lose Account #4127 over price." These aren\u2019t constraints — they\u2019re priorities. The model respects those too.' },
+  { ch: 'yie', vs: 'final', eyebrow: 'Your In-House Expertise',
+    headline: 'The output is the math — bent to fit how you actually run the business.',
+    caption: 'Same engine. Different answer. Every deal still gets its own price; that price now respects what you know about your customers, your contracts, and your goals.' },
+
+  { ch: 'converge', vs: null, eyebrow: 'One model',
+    headline: 'Four inputs. One pricing model.',
+    caption: 'Data Driven Insights finds the structure in your history. Environmental Factors keep it tied to today\u2019s market. Our Industry Expertise points it at the right number — the pocket price. Your In-House Expertise bends the output to fit how you run the business. Together: one model that prices every deal.' },
+
+  { ch: 'flow', vs: null, eyebrow: 'Live',
+    headline: 'Every quote teaches the model.',
+    caption: "A price goes out. The deal wins or loses — and the model sees the outcome. Won at $4.20? A signal. Lost at $4.35? A signal too. Pricing isn't a one-time deliverable; it's a continuous loop between your sales floor and the model. The next price out the door is sharper than the one before it." },
+
+  { ch: 'adapt-market', vs: null, eyebrow: 'It learns',
+    headline: 'The market moves. Every price moves with it.',
+    caption: 'A competitor cuts. An input cost spikes. The index ticks. Environmental Factors catches it the moment it happens — and every price in your system retunes to the new world. No project. No rebuild. No waiting on a quarterly refresh.' },
+
+  { ch: 'adapt-strategy', vs: null, eyebrow: 'It learns',
+    headline: 'Your goals change. Tell it once.',
+    caption: 'This year you\u2019re growing share. Next year you\u2019re harvesting margin. The same engine repoints — you change the objective, not the model. Every constraint you set is still respected. Every input it learned from still applies. It just aims at a different target.' },
+
+  { ch: 'close', vs: null, eyebrow: '', headline: '', caption: '' },
+];
+
+const CHAPTERS = [
+  { label: 'The Four',    beats: [0] },
+  { label: 'Data',        beats: [1, 2, 3, 4, 5] },
+  { label: 'Environment', beats: [6, 7, 8, 9] },
+  { label: 'Industry',    beats: [10, 11, 12, 13] },
+  { label: 'In-House',    beats: [14, 15, 16, 17] },
+  { label: 'One Model',   beats: [18] },
+  { label: 'It Learns',   beats: [19] },
+  { label: 'Market',      beats: [20] },
+  { label: 'Strategy',    beats: [21] },
+  { label: 'Close',       beats: [22] },
+];
+
+// pie config per chapter
+function pieFor(beat) {
+  switch (beat.ch) {
+    case 'intro':   return { mode: 'intro', active: null, showIcons: false };
+    case 'ddi':     return { mode: 'chapter', active: 0 };
+    case 'ef':      return { mode: 'chapter', active: 1 };
+    case 'iexp':    return { mode: 'chapter', active: 2 };
+    case 'yie':     return { mode: 'chapter', active: 3 };
+    case 'converge':return { mode: 'converge', showIcons: true };
+    case 'flow':    return { mode: 'converge', showIcons: true, pulse: 0 };
+    case 'adapt-market': return { mode: 'converge', showIcons: true, pulse: 1 };
+    case 'adapt-strategy': return { mode: 'converge', showIcons: true, pulse: 3 };
+    case 'close':   return { mode: 'converge', showIcons: true, faded: true };
+    default:        return { mode: 'intro' };
+  }
+}
+
+function Stage({ beat }) {
+  const { IntroStage, CloseCard, DdiViz, EfViz, IexpViz, YieViz,
+          ConvergeViz, FlowViz, AdaptMarketViz, AdaptStrategyViz } = window;
+  if (beat.ch === 'intro') return <IntroStage />;
+  if (beat.ch === 'close') return <CloseCard />;
+  let Viz = null;
+  if (beat.ch === 'ddi') Viz = <DdiViz state={beat.vs} />;
+  else if (beat.ch === 'ef') Viz = <EfViz state={beat.vs} />;
+  else if (beat.ch === 'iexp') Viz = <IexpViz state={beat.vs} />;
+  else if (beat.ch === 'yie') Viz = <YieViz state={beat.vs} />;
+  else if (beat.ch === 'converge') Viz = <ConvergeViz />;
+  else if (beat.ch === 'flow') Viz = <FlowViz />;
+  else if (beat.ch === 'adapt-market') Viz = <AdaptMarketViz />;
+  else if (beat.ch === 'adapt-strategy') Viz = <AdaptStrategyViz />;
+  return (
+    <svg className="stage-svg" viewBox="0 0 720 500" preserveAspectRatio="xMidYMid meet" role="img">
+      <g key={beat.ch} className="viz-mount">{Viz}</g>
+    </svg>
+  );
+}
+
+function App() {
+  const [idx, setIdx] = useState(() => {
+    const h = parseInt((location.hash || '').replace('#', ''), 10);
+    return (Number.isFinite(h) && h >= 0 && h < BEATS.length) ? h : 0;
+  });
+  const [touched, setTouched] = useState(false);
+  const beat = BEATS[idx];
+  const Pie = window.Pie;
+
+  const clamp = (n) => Math.max(0, Math.min(BEATS.length - 1, n));
+  const go = useCallback((n) => { setIdx(() => clamp(n)); setTouched(true); }, []);
+  const step = useCallback((d) => { setIdx((i) => clamp(i + d)); setTouched(true); }, []);
+
+  useEffect(() => { try { location.hash = String(idx); } catch (e) {} }, [idx]);
+  useEffect(() => { window.__goto = go; }, [go]);
+
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); step(1); }
+      else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); step(-1); }
+      else if (e.key === 'Home') go(0);
+      else if (e.key === 'End') go(BEATS.length - 1);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [step, go]);
+
+  const pie = pieFor(beat);
+
+  return (
+    <div className="app-shell">
+      <header className="topbar">
+        <div className="wordmark">INSIGHT<span>2</span>PROFIT</div>
+        <div className="top-meta">
+          <div className="beat-counter"><strong>{String(idx + 1).padStart(2, '0')}</strong> / {BEATS.length}</div>
+          <div className={'arrow-hint' + (touched ? '' : ' pulse')}><kbd>←</kbd> <kbd>→</kbd> Navigate</div>
+        </div>
+      </header>
+
+      <div className="main">
+        <div className="left-pane">
+          <div className={'narrative' + (beat.headline ? '' : ' empty')} aria-live="polite">
+            {beat.headline && (
+              <React.Fragment key={idx}>
+                <div className="eyebrow nfade">{beat.eyebrow}</div>
+                <h1 className="headline nfade">{beat.headline}</h1>
+                <p className="caption nfade">{beat.caption}</p>
+              </React.Fragment>
+            )}
+          </div>
+          <div className="stage-area">
+            <Stage beat={beat} />
+          </div>
+        </div>
+
+        <div className="right-pane">
+          <Pie mode={pie.mode} active={pie.active ?? null} pulse={pie.pulse ?? null}
+               showIcons={!!pie.showIcons} faded={!!pie.faded} />
+        </div>
+      </div>
+
+      <nav aria-label="Chapters">
+        <ul className="progress">
+          {CHAPTERS.map((c, ci) => {
+            const isActive = c.beats.includes(idx);
+            return (
+              <li key={ci} className={isActive ? 'active' : ''} onClick={() => go(c.beats[0])}>
+                <div className="seg-track">
+                  {c.beats.map((b) => (
+                    <span key={b} className={'seg-cell' + (b < idx ? ' past' : (b === idx ? ' current' : ''))}></span>
+                  ))}
+                </div>
+                <div className="seg-label">{c.label}</div>
+              </li>
+            );
+          })}
+        </ul>
+      </nav>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

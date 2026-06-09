@@ -3,7 +3,6 @@
 import { ComponentType } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { useDepth } from "@/lib/depth-context";
-import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { DepthLayer } from "@/components/depth-layer";
 
@@ -20,14 +19,7 @@ export function ZoomView({ slug, low: Low, medium: Medium, high: High }: ZoomVie
 
   return (
     <div className="space-y-4">
-      <div
-        className={cn(
-          "transition-all duration-300",
-          depth >= 1 && "text-sm text-muted-foreground",
-        )}
-      >
-        <Low />
-      </div>
+      <Low />
 
       <DepthLayer visible={depth >= 1}>
         <div className="border-l-2 border-border pl-4">
