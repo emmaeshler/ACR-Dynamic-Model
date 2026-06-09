@@ -35,17 +35,15 @@ export function ZoomView({ slug, low: Low, medium: Medium, high: High }: ZoomVie
 
       <div className="flex items-center gap-2 pt-2">
         {depth < 2 && (
-          <Button
-            variant="ghost"
-            size="sm"
+          <button
             onClick={() => zoomIn(slug)}
-            className="text-muted-foreground"
+            className="inline-flex items-center gap-1.5 rounded-lg border-2 border-[#00446a]/20 bg-[#00446a]/5 px-4 py-2 text-sm font-medium text-[#00446a] transition-all hover:border-[#00446a]/40 hover:bg-[#00446a]/10"
           >
             <ChevronDown className="size-3.5" />
-            Look closer
-          </Button>
+            Dig Deeper
+          </button>
         )}
-        {depth > 0 && (
+        {depth > 1 && (
           <Button
             variant="ghost"
             size="sm"
@@ -53,7 +51,7 @@ export function ZoomView({ slug, low: Low, medium: Medium, high: High }: ZoomVie
             className="text-muted-foreground"
           >
             <ChevronUp className="size-3.5" />
-            Zoom out
+            Collapse
           </Button>
         )}
       </div>

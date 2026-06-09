@@ -23,7 +23,7 @@ interface DepthContextValue {
 
 const DepthContext = createContext<DepthContextValue | null>(null);
 
-const DEFAULT_STATE: SectionState = { depth: 0, viewMode: "zoom" };
+const DEFAULT_STATE: SectionState = { depth: 1, viewMode: "zoom" };
 
 export function DepthProvider({ children }: { children: ReactNode }) {
   const [sections, setSections] = useState<Record<string, SectionState>>({});

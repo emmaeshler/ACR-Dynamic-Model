@@ -24,6 +24,7 @@ import {
 type SlideConfig =
   | { kind: "intro" }
   | { kind: "walkthrough" }
+  | { kind: "transition" }
   | {
       kind: "build";
       visibleNodes: DiagramNode[];
@@ -156,6 +157,9 @@ NAV_GROUPS.push({
   })),
 });
 
+const TRANSITION_INDEX = SLIDES.length;
+SLIDES.push({ kind: "transition" });
+
 const accumulated: DiagramNode[] = [];
 
 for (const group of SECTION_GROUPS) {
@@ -185,11 +189,12 @@ for (const group of SECTION_GROUPS) {
 
 SLIDES.push({ kind: "complete" });
 SLIDES.push({ kind: "end" });
+const END_INDEX = SLIDES.length - 1;
 NAV_GROUPS.push({
   label: "Closing",
   slides: [
     { index: SLIDES.length - 2, label: "Complete Picture" },
-    { index: SLIDES.length - 1, label: "Thank You" },
+    { index: END_INDEX, label: "Thank You" },
   ],
 });
 
@@ -269,6 +274,12 @@ export default function Home() {
             {config.kind === "intro" && <IntroSlide />}
             {config.kind === "walkthrough" && (
               <WalkthroughSlide beat={wtBeat} skipEntrance={wtRevealed} />
+            )}
+            {config.kind === "transition" && (
+              <TransitionSlide
+                onDiveDeeper={() => navigate(TRANSITION_INDEX + 1)}
+                onWrapUp={() => navigate(END_INDEX)}
+              />
             )}
             {config.kind === "build" && (
               <BuildStepSlide
@@ -509,6 +520,66 @@ function SectionSlide({
       medium={section.medium}
       high={section.high}
     />
+  );
+}
+
+function TransitionSlide({
+  onDiveDeeper,
+  onWrapUp,
+}: {
+  onDiveDeeper: () => void;
+  onWrapUp: () => void;
+}) {
+  return (
+    <div className="mx-auto flex min-h-[calc(100vh-4rem)] max-w-3xl flex-col items-center justify-center px-6 text-center">
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+      >
+        <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+          Want to go deeper?
+        </h2>
+        <p className="mx-auto mt-3 max-w-lg text-muted-foreground">
+          We can walk through each component in detail, or wrap up here.
+        </p>
+      </motion.div>
+
+      <div className="mt-10 flex flex-col gap-4 sm:flex-row sm:gap-6">
+        <motion.button
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.15 }}
+          onClick={onDiveDeeper}
+          className="group relative overflow-hidden rounded-xl border-2 border-[#00446a] bg-[#00446a] px-8 py-5 text-left transition-all hover:shadow-lg sm:w-64"
+        >
+          <span className="block text-lg font-semibold text-white">
+            Dive Deeper
+          </span>
+          <span className="mt-1 block text-sm text-white/70">
+            Walk through each piece of the model
+          </span>
+          <span className="mt-3 inline-block text-xs font-medium text-white/50">
+            Press Next →
+          </span>
+        </motion.button>
+
+        <motion.button
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.25 }}
+          onClick={onWrapUp}
+          className="group relative overflow-hidden rounded-xl border-2 border-gray-200 bg-white px-8 py-5 text-left transition-all hover:border-gray-300 hover:shadow-md sm:w-64"
+        >
+          <span className="block text-lg font-semibold text-gray-800">
+            That&apos;s All For Now
+          </span>
+          <span className="mt-1 block text-sm text-muted-foreground">
+            Jump to wrap-up
+          </span>
+        </motion.button>
+      </div>
+    </div>
   );
 }
 
