@@ -15,9 +15,15 @@ import {
   ConfiguredProductsSlide,
   ConfiguredServicesSlide,
 } from "@/components/quoting-apps-slide";
+import {
+  WalkthroughSlide,
+  TOTAL_BEATS,
+  BEAT_LABELS,
+} from "@/components/walkthrough-slide";
 
 type SlideConfig =
   | { kind: "intro" }
+  | { kind: "walkthrough" }
   | {
       kind: "build";
       visibleNodes: DiagramNode[];
@@ -139,6 +145,17 @@ NAV_GROUPS.push({
   slides: [{ index: 0, label: "Welcome" }],
 });
 
+const WALKTHROUGH_INDEX = SLIDES.length;
+SLIDES.push({ kind: "walkthrough" });
+NAV_GROUPS.push({
+  label: "Overview",
+  slides: BEAT_LABELS.map((label, i) => ({
+    index: WALKTHROUGH_INDEX,
+    label,
+    subStep: i,
+  })),
+});
+
 const accumulated: DiagramNode[] = [];
 
 for (const group of SECTION_GROUPS) {
@@ -178,13 +195,47 @@ NAV_GROUPS.push({
 
 export default function Home() {
   const [slide, setSlide] = useState(0);
+  const [wtBeat, setWtBeat] = useState(0);
+  const [wtRevealed, setWtRevealed] = useState(false);
   const total = SLIDES.length;
 
+  const isWalkthrough = SLIDES[slide]?.kind === "walkthrough";
+
+  useEffect(() => {
+    if (!isWalkthrough || wtRevealed) return;
+    const timer = setTimeout(() => setWtRevealed(true), 3200);
+    return () => clearTimeout(timer);
+  }, [isWalkthrough, wtRevealed]);
+
   const navigate = useCallback(
-    (index: number) => {
-      if (index >= 0 && index < total) setSlide(index);
+    (index: number, subStep?: number) => {
+      if (subStep !== undefined) {
+        if (index >= 0 && index < total) {
+          setSlide(index);
+          setWtBeat(subStep);
+        }
+        return;
+      }
+
+      if (isWalkthrough && index === slide + 1 && wtBeat < TOTAL_BEATS - 1) {
+        setWtBeat((b) => b + 1);
+        return;
+      }
+      if (isWalkthrough && index === slide - 1 && wtBeat > 0) {
+        setWtBeat((b) => b - 1);
+        return;
+      }
+      if (!isWalkthrough && index === WALKTHROUGH_INDEX && slide === WALKTHROUGH_INDEX + 1) {
+        setSlide(index);
+        setWtBeat(TOTAL_BEATS - 1);
+        return;
+      }
+
+      if (index >= 0 && index < total) {
+        setSlide(index);
+      }
     },
-    [total],
+    [total, slide, isWalkthrough, wtBeat],
   );
 
   useEffect(() => {
@@ -216,6 +267,9 @@ export default function Home() {
             className="w-full"
           >
             {config.kind === "intro" && <IntroSlide />}
+            {config.kind === "walkthrough" && (
+              <WalkthroughSlide beat={wtBeat} skipEntrance={wtRevealed} />
+            )}
             {config.kind === "build" && (
               <BuildStepSlide
                 visibleNodes={config.visibleNodes}
@@ -245,6 +299,7 @@ export default function Home() {
       </main>
       <SlideNav
         current={slide}
+        currentSubStep={isWalkthrough ? wtBeat : undefined}
         total={total}
         groups={NAV_GROUPS}
         onNavigate={navigate}
@@ -253,23 +308,128 @@ export default function Home() {
   );
 }
 
+function I2PLogoMark({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 36 36" className={className} aria-hidden="true">
+      <rect x="0" y="0" width="15" height="15" rx="2" fill="#EF8B1D" />
+      <rect x="19" y="0" width="15" height="15" rx="2" fill="#E56910" />
+      <rect x="0" y="19" width="15" height="15" rx="2" fill="#00446A" />
+      <rect x="19" y="19" width="15" height="15" rx="2" fill="#E56910" />
+    </svg>
+  );
+}
+
+function IntroBackdrop() {
+  return (
+    <svg
+      className="pointer-events-none absolute inset-0 h-full w-full"
+      preserveAspectRatio="xMidYMid slice"
+      viewBox="0 0 1200 700"
+      aria-hidden="true"
+    >
+      <defs>
+        <linearGradient id="intro-grad" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#00446A" />
+          <stop offset="100%" stopColor="#06283D" />
+        </linearGradient>
+      </defs>
+      <rect width="1200" height="700" fill="url(#intro-grad)" />
+
+      {/* Subtle grid lines */}
+      {Array.from({ length: 12 }, (_, i) => (
+        <line
+          key={`v${i}`}
+          x1={100 * i}
+          y1="0"
+          x2={100 * i}
+          y2="700"
+          stroke="rgba(255,255,255,0.03)"
+          strokeWidth="1"
+        />
+      ))}
+      {Array.from({ length: 8 }, (_, i) => (
+        <line
+          key={`h${i}`}
+          x1="0"
+          y1={100 * i}
+          x2="1200"
+          y2={100 * i}
+          stroke="rgba(255,255,255,0.03)"
+          strokeWidth="1"
+        />
+      ))}
+
+      {/* Abstract data dots — pricing scatter feel */}
+      {[
+        [180, 180, 3], [220, 260, 2], [310, 150, 2.5], [370, 310, 2],
+        [440, 200, 3.5], [520, 280, 2], [560, 140, 2.5], [640, 240, 3],
+        [710, 170, 2], [780, 300, 2.5], [830, 190, 2], [900, 260, 3],
+        [960, 150, 2.5], [1020, 220, 2], [1060, 310, 2.5],
+        [150, 450, 2], [250, 520, 2.5], [380, 480, 3], [490, 540, 2],
+        [600, 460, 2.5], [720, 510, 2], [850, 470, 3], [950, 530, 2.5],
+        [1050, 490, 2],
+      ].map(([cx, cy, r], i) => (
+        <circle
+          key={i}
+          cx={cx}
+          cy={cy}
+          r={r}
+          fill={i % 5 === 0 ? "#E56910" : i % 3 === 0 ? "#21A5D5" : "white"}
+          opacity={i % 5 === 0 ? 0.15 : 0.06}
+        />
+      ))}
+
+      {/* Rising curve — the "optimal curve" motif */}
+      <path
+        d="M80 520 C200 510, 300 480, 450 420 S700 300, 900 250 S1050 210, 1140 190"
+        fill="none"
+        stroke="rgba(229,105,16,0.12)"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+      />
+      <path
+        d="M80 540 C200 530, 300 500, 450 450 S700 340, 900 290 S1050 250, 1140 230"
+        fill="none"
+        stroke="rgba(33,165,213,0.08)"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
 function IntroSlide() {
   return (
-    <div className="mx-auto flex min-h-[calc(100vh-4rem)] max-w-3xl flex-col items-center justify-center px-6 text-center">
-      <span className="mb-4 inline-block rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
-        Model Walkthrough
-      </span>
-      <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
-        How We Build a Pricing Model
-      </h1>
-      <p className="mt-4 max-w-xl text-lg text-muted-foreground">
-        Four inputs — your data, the market, our expertise, and your strategy —
-        produce one smart output. Walk through how the model works, why we chose
-        ML, and how it learns over time.
-      </p>
-      <p className="mt-8 text-sm text-muted-foreground">
-        Use arrow keys or the navigation below to move through slides →
-      </p>
+    <div className="relative flex min-h-[calc(100vh-4rem)] flex-col items-center justify-center overflow-hidden px-6 text-center">
+      <IntroBackdrop />
+
+      <div className="relative z-10 mx-auto max-w-3xl">
+        <div className="mb-8 flex items-center justify-center gap-3">
+          <I2PLogoMark className="size-8" />
+          <span className="text-sm font-semibold tracking-[0.2em] text-white/60 uppercase">
+            Insight2Profit
+          </span>
+        </div>
+
+        <h1 className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl lg:text-6xl">
+          How We Build a{" "}
+          <span className="relative inline-block">
+            Pricing Model
+            <span className="absolute -bottom-1 left-0 h-1 w-full rounded-full bg-[#E56910]" />
+          </span>
+        </h1>
+
+        <p className="mx-auto mt-6 max-w-xl text-lg leading-relaxed text-white/70">
+          Your transaction history, market intelligence, our industry expertise,
+          and your business rules come together in one model — built to find the
+          right price for every deal and adapt as conditions change.
+        </p>
+
+        <div className="mt-10 flex items-center justify-center gap-2 text-sm text-white/40">
+          <span>Use arrow keys or tap Next to begin</span>
+          <span className="inline-block animate-pulse">→</span>
+        </div>
+      </div>
     </div>
   );
 }

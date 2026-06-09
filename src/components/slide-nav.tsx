@@ -7,32 +7,39 @@ import { cn } from "@/lib/utils";
 
 export interface NavGroup {
   label: string;
-  slides: { index: number; label: string }[];
+  slides: { index: number; label: string; subStep?: number }[];
 }
 
 interface SlideNavProps {
   current: number;
+  currentSubStep?: number;
   total: number;
   groups: NavGroup[];
-  onNavigate: (index: number) => void;
+  onNavigate: (index: number, subStep?: number) => void;
 }
 
-export function SlideNav({ current, total, groups, onNavigate }: SlideNavProps) {
+export function SlideNav({ current, currentSubStep, total, groups, onNavigate }: SlideNavProps) {
   const [open, setOpen] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
 
   const currentGroup = groups.find((g) =>
-    g.slides.some((s) => s.index === current),
-  );
+    g.slides.some((s) => s.index === current && (s.subStep === undefined || s.subStep === currentSubStep)),
+  ) ?? groups.find((g) => g.slides.some((s) => s.index === current));
+
   const currentGroupIndex = groups.indexOf(currentGroup!);
+
   const substepIndex = currentGroup
-    ? currentGroup.slides.findIndex((s) => s.index === current)
+    ? currentGroup.slides.findIndex(
+        (s) =>
+          s.index === current &&
+          (s.subStep === undefined || s.subStep === currentSubStep),
+      )
     : 0;
 
   const handleNavigate = useCallback(
-    (index: number) => {
-      onNavigate(index);
+    (index: number, subStep?: number) => {
+      onNavigate(index, subStep);
       setOpen(false);
     },
     [onNavigate],
@@ -71,14 +78,24 @@ export function SlideNav({ current, total, groups, onNavigate }: SlideNavProps) 
           <div className="max-h-[60vh] overflow-y-auto p-3">
             {groups.map((group, gi) => {
               const groupDone = group.slides.every(
-                (s) => s.index < current,
+                (s) =>
+                  s.index < current ||
+                  (s.index === current &&
+                    s.subStep !== undefined &&
+                    currentSubStep !== undefined &&
+                    s.subStep < currentSubStep),
               );
               const groupActive = gi === currentGroupIndex;
 
               return (
                 <div key={gi} className="mb-1 last:mb-0">
                   <button
-                    onClick={() => handleNavigate(group.slides[0].index)}
+                    onClick={() =>
+                      handleNavigate(
+                        group.slides[0].index,
+                        group.slides[0].subStep,
+                      )
+                    }
                     className={cn(
                       "flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-left text-sm font-medium transition-colors",
                       groupActive
@@ -110,12 +127,22 @@ export function SlideNav({ current, total, groups, onNavigate }: SlideNavProps) 
                   {group.slides.length > 1 && (
                     <div className="ml-6 border-l border-muted pl-3 py-0.5">
                       {group.slides.map((slide) => {
-                        const isActive = slide.index === current;
-                        const isDone = slide.index < current;
+                        const isActive =
+                          slide.index === current &&
+                          (slide.subStep === undefined ||
+                            slide.subStep === currentSubStep);
+                        const isDone =
+                          slide.index < current ||
+                          (slide.index === current &&
+                            slide.subStep !== undefined &&
+                            currentSubStep !== undefined &&
+                            slide.subStep < currentSubStep);
                         return (
                           <button
-                            key={slide.index}
-                            onClick={() => handleNavigate(slide.index)}
+                            key={`${slide.index}-${slide.subStep ?? ""}`}
+                            onClick={() =>
+                              handleNavigate(slide.index, slide.subStep)
+                            }
                             className={cn(
                               "flex w-full items-center gap-2 rounded px-2 py-1 text-left text-xs transition-colors",
                               isActive

@@ -336,44 +336,54 @@ export function DiagramRoadmap({
         />
       ))}
 
-      {/* Feedback arc */}
-      <motion.path
-        d="M835 305 C835 400, 115 400, 115 169"
-        fill="none"
-        stroke={MUTED}
-        strokeWidth={1.5}
-        strokeDasharray="6 4"
-        markerEnd="url(#rm-arrow-muted)"
-        initial={animated ? { opacity: 0 } : false}
-        animate={{
-          opacity:
-            visibleNodes && (!visibleNodes.includes("negotiate") || !visibleNodes.includes("data"))
-              ? GHOST_ARROW
-              : highlight
-                ? 0.1
-                : 0.5,
-        }}
-        transition={{ duration: 0.6, delay: animated ? ENTRANCE.feedback : 0 }}
-      />
+      {/* Feedback arcs — Conviction and Negotiate loop back to Model */}
+      {[
+        { from: "conviction" as DiagramNode, d: "M740 84 C680 60, 620 80, 582 155", delay: 0 },
+        { from: "negotiate" as DiagramNode, d: "M740 274 C680 300, 620 280, 582 205", delay: 0.15 },
+      ].map((fb) => {
+        const fbVisible =
+          !visibleNodes || visibleNodes.includes(fb.from);
+        return (
+          <motion.path
+            key={fb.from}
+            d={fb.d}
+            fill="none"
+            stroke={MUTED}
+            strokeWidth={1.5}
+            strokeDasharray="6 4"
+            markerEnd="url(#rm-arrow-muted)"
+            initial={animated ? { opacity: 0 } : false}
+            animate={{
+              opacity: !fbVisible
+                ? GHOST_ARROW
+                : highlight
+                  ? 0.1
+                  : 0.5,
+            }}
+            transition={{ duration: 0.6, delay: animated ? ENTRANCE.feedback + fb.delay : 0 }}
+          />
+        );
+      })}
       <motion.text
-        x={480}
-        y={400}
-        fontSize="11"
+        x={660}
+        y={180}
+        fontSize="10"
         fill={MUTED}
         textAnchor="middle"
         fontStyle="italic"
         initial={animated ? { opacity: 0 } : false}
         animate={{
           opacity:
-            visibleNodes && (!visibleNodes.includes("negotiate") || !visibleNodes.includes("data"))
+            visibleNodes &&
+            (!visibleNodes.includes("conviction") && !visibleNodes.includes("negotiate"))
               ? GHOST_ARROW
               : highlight
                 ? 0.1
-                : 0.5,
+                : 0.45,
         }}
         transition={{ duration: 0.5, delay: animated ? ENTRANCE.feedback + 0.3 : 0 }}
       >
-        Outcomes feed back into the model
+        Outcomes feed back
       </motion.text>
 
       {/* Flow dots — only on full animated diagram */}
