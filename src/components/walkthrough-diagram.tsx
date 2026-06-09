@@ -231,11 +231,13 @@ function WTNodeBox({
   beat,
   entranceDelay,
   fast,
+  onNodeClick,
 }: {
   node: NodeDef;
   beat: number;
   entranceDelay: number;
   fast: boolean;
+  onNodeClick?: (nodeId: string) => void;
 }) {
   const opacity = nodeOp(node.id, node.zone, beat);
   const glow = isGlowing(node.id, node.zone, beat);
@@ -243,6 +245,10 @@ function WTNodeBox({
   const tr = fast
     ? { duration: 0.5, ease: "easeInOut" as const }
     : { duration: 0.6, delay: entranceDelay, ease: "easeOut" as const };
+
+  const iconX = node.x + node.w - 18;
+  const iconY = node.y + 6;
+  const iconR = 8;
 
   return (
     <motion.g initial={fast ? false : { opacity: 0 }} animate={{ opacity }} transition={tr}>
@@ -275,7 +281,7 @@ function WTNodeBox({
           </text>
           <text
             x={node.x + node.w / 2} y={node.y + 64}
-            fontSize="12" fill="rgba(255,255,255,0.65)" textAnchor="middle"
+            fontSize="13" fill="rgba(255,255,255,0.85)" textAnchor="middle"
           >
             {node.subtitle}
           </text>
@@ -302,10 +308,27 @@ function WTNodeBox({
           </text>
           <text
             x={node.x + node.w / 2 + 2} y={node.y + 42}
-            fontSize="11" fill={MUTED} textAnchor="middle"
+            fontSize="12" fill="#3d4f5f" textAnchor="middle"
           >
             {node.subtitle}
           </text>
+
+          {glow && onNodeClick && (
+            <g
+              className="cursor-pointer"
+              onClick={(e) => { e.stopPropagation(); onNodeClick(node.id); }}
+            >
+              <circle cx={iconX} cy={iconY + iconR} r={iconR} fill={node.color} opacity={0.12} />
+              <circle cx={iconX} cy={iconY + iconR} r={iconR} fill="none" stroke={node.color} strokeWidth={1.2} opacity={0.5} />
+              <text
+                x={iconX} y={iconY + iconR + 4}
+                fontSize="11" fontWeight="600" fill={node.color}
+                textAnchor="middle"
+              >
+                i
+              </text>
+            </g>
+          )}
         </>
       )}
     </motion.g>
@@ -319,9 +342,10 @@ function WTNodeBox({
 interface WalkthroughDiagramProps {
   beat: number;
   skipEntrance?: boolean;
+  onNodeClick?: (nodeId: string) => void;
 }
 
-export function WalkthroughDiagram({ beat, skipEntrance = false }: WalkthroughDiagramProps) {
+export function WalkthroughDiagram({ beat, skipEntrance = false, onNodeClick }: WalkthroughDiagramProps) {
   const [fast, setFast] = useState(skipEntrance);
 
   useEffect(() => {
@@ -345,7 +369,7 @@ export function WalkthroughDiagram({ beat, skipEntrance = false }: WalkthroughDi
 
   return (
     <svg
-      viewBox="0 0 1000 460"
+      viewBox="0 -6 1000 466"
       className="w-full"
       role="img"
       aria-label="ML pricing model walkthrough"
@@ -372,9 +396,9 @@ export function WalkthroughDiagram({ beat, skipEntrance = false }: WalkthroughDi
           key={`zlbl-${z}`}
           x={ZONE_LABELS[z].x}
           y={ZONE_LABELS[z].y}
-          fontSize="10"
-          fontWeight="600"
-          fill={MUTED}
+          fontSize="13"
+          fontWeight="700"
+          fill="#4a5568"
           textAnchor="middle"
           letterSpacing="2"
           initial={{ opacity: 0 }}
@@ -448,12 +472,13 @@ export function WalkthroughDiagram({ beat, skipEntrance = false }: WalkthroughDi
       <motion.text
         x={685}
         y={193}
-        fontSize="10"
-        fill={MUTED}
+        fontSize="13"
+        fontWeight="500"
+        fill="#4a5568"
         textAnchor="middle"
         fontStyle="italic"
         initial={fast ? false : { opacity: 0 }}
-        animate={{ opacity: beat === 4 ? 0.75 : beat === 0 || beat === 5 ? 0.4 : 0.04 }}
+        animate={{ opacity: beat === 4 ? 0.85 : beat === 0 || beat === 5 ? 0.55 : 0.04 }}
         transition={tr(2.6)}
       >
         Outcomes feed back
@@ -467,6 +492,7 @@ export function WalkthroughDiagram({ beat, skipEntrance = false }: WalkthroughDi
           beat={beat}
           entranceDelay={0.2 + i * 0.15}
           fast={fast}
+          onNodeClick={onNodeClick}
         />
       ))}
 
@@ -481,8 +507,10 @@ export function WalkthroughDiagram({ beat, skipEntrance = false }: WalkthroughDi
           beat={beat}
           entranceDelay={1.9 + i * 0.12}
           fast={fast}
+          onNodeClick={onNodeClick}
         />
       ))}
+
     </svg>
   );
 }

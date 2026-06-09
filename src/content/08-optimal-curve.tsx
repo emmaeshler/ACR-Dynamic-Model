@@ -1,5 +1,9 @@
 "use client";
 
+import { DemandCurveCaptureVisual } from "@/components/visuals/demand-curve-capture";
+import { CaptureComparisonVisual } from "@/components/visuals/capture-comparison";
+import { ObjectiveFunctionVisual } from "@/components/visuals/objective-function";
+
 const P = "#00446a";
 const O = "#D97C14";
 const G = "#2e7d32";
@@ -56,25 +60,41 @@ export function OptimalCurveLow() {
 /* ── Medium depth: Demo v9 optimal-curve + capture narrative ── */
 export function OptimalCurveMedium() {
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <h3 className="text-lg font-semibold tracking-tight">One price is easiest to manage. It also leaves the most on the table.</h3>
+
+      <div className="rounded-lg border bg-muted/30 p-4">
+        <DemandCurveCaptureVisual />
+      </div>
+
       <p className="text-sm leading-relaxed text-muted-foreground">
         Pick a number, ship every deal at it. Simple — but a single price leaves margin on the table
         at every point on the demand curve. Each additional price point recovers margin a single price
         misses. But there&apos;s still a gap between each step and the curve — profit you could have
         captured with smarter pricing.
       </p>
+
+      <div className="rounded-lg border bg-muted/30 p-4">
+        <CaptureComparisonVisual />
+      </div>
+
       <p className="text-sm leading-relaxed text-muted-foreground">
         Machine learning can set any number of prices along this curve. Every deal gets its own
         price — fitted to the curve, not approximated by a step. One price covers 54% of addressable
         margin. Manual segmentation gets to 78%. An ML model lands at 92%. The gap between where
         you are and that ceiling is the opportunity.
       </p>
+
+      <h4 className="text-base font-semibold tracking-tight">Optimize for margin dollars</h4>
+
+      <div className="rounded-lg border bg-muted/30 p-4">
+        <ObjectiveFunctionVisual />
+      </div>
+
       <p className="text-sm leading-relaxed text-muted-foreground">
-        How does it set that many prices? By finding factors that influence price — same SKU, similar
-        volume, wildly different prices — and testing every attribute for whether it actually moves
-        price. Region, channel, order size, customer tier. Each driver becomes a control knob the
-        model tunes for every deal. Knobs settle. Prices land back on the optimal curve.
+        The model finds the price that maximizes expected margin dollars. For each deal, it estimates
+        a margin parabola and a win-probability sigmoid. The optimal price sits where
+        price × P(win) × margin rate peaks. As deals close, predicted meets actual — and the model adjusts.
       </p>
     </div>
   );

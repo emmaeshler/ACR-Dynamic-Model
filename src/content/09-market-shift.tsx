@@ -1,5 +1,7 @@
 "use client";
 
+import { MarketShiftCurveVisual } from "@/components/visuals/market-shift-curve";
+
 const P = "#00446a";
 const O = "#D97C14";
 const G = "#2e7d32";
@@ -63,20 +65,22 @@ export function MarketShiftLow() {
 /* ── Medium depth: Narrative explanation ── */
 export function MarketShiftMedium() {
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <h3 className="text-lg font-semibold tracking-tight">The market moves. Every price moves with it.</h3>
+
+      <div className="rounded-lg border bg-muted/30 p-4">
+        <MarketShiftCurveVisual />
+      </div>
+
       <p className="text-sm leading-relaxed text-muted-foreground">
-        A competitor cuts. An input cost spikes. The index ticks. Environmental factors catch it
-        the moment it happens — and every price in your system retunes to the new world. No
-        project. No rebuild. No waiting on a quarterly refresh.
+        Demand shifts. Drivers change weight. Prices retune — automatically. The demand curve
+        morphs month by month as market conditions evolve. The price dot tracks the curve,
+        finding the new optimal point without manual intervention. No project. No rebuild.
+        No waiting on a quarterly refresh.
       </p>
       <p className="text-sm leading-relaxed text-muted-foreground">
-        The green line shows a stable period — win rates are consistent, pricing is working. Then
-        something changes. The dashed red line shows the impact — win rates start declining. Without
-        the model, you wouldn&apos;t notice until the quarterly review. With it, the signal is
-        detected at the inflection point (orange circle), and corrective pricing recommendations
-        begin immediately. The blue line shows recovery — the model corrects before the trend
-        becomes a crisis.
+        A competitor cuts. An input cost spikes. The index ticks. Environmental factors catch it
+        the moment it happens — and every price in your system retunes to the new world.
       </p>
     </div>
   );

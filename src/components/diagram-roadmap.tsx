@@ -229,7 +229,7 @@ function NodeBox({
           <text x={node.x + node.w / 2} y={node.y + 32} fontSize="18" fontWeight="700" fill="white" textAnchor="middle">
             {node.label}
           </text>
-          <text x={node.x + node.w / 2} y={node.y + 50} fontSize="11" fill="rgba(255,255,255,0.7)" textAnchor="middle">
+          <text x={node.x + node.w / 2} y={node.y + 50} fontSize="12" fill="rgba(255,255,255,0.85)" textAnchor="middle">
             {node.subtitle}
           </text>
           <ModelProcessing x={node.x} y={node.y + 60} />
@@ -257,7 +257,7 @@ function NodeBox({
           <text x={node.x + node.w / 2 + 2} y={node.y + 27} fontSize="14" fontWeight="600" fill="#1a1a1a" textAnchor="middle">
             {node.label}
           </text>
-          <text x={node.x + node.w / 2 + 2} y={node.y + 45} fontSize="11" fill={MUTED} textAnchor="middle">
+          <text x={node.x + node.w / 2 + 2} y={node.y + 45} fontSize="12" fill="#3d4f5f" textAnchor="middle">
             {node.subtitle}
           </text>
         </>
@@ -367,8 +367,9 @@ export function DiagramRoadmap({
       <motion.text
         x={660}
         y={180}
-        fontSize="10"
-        fill={MUTED}
+        fontSize="13"
+        fontWeight="500"
+        fill="#4a5568"
         textAnchor="middle"
         fontStyle="italic"
         initial={animated ? { opacity: 0 } : false}

@@ -1,5 +1,8 @@
 "use client";
 
+import { RegionScatterVisual } from "@/components/visuals/region-scatter";
+import { AttributeGridVisual } from "@/components/visuals/attribute-grid";
+
 const P = "#00446a";
 const O = "#D97C14";
 const G = "#2e7d32";
@@ -65,20 +68,30 @@ export function DDILow() {
 /* ── Medium depth: Story v2 DDI beats 1-5 ── */
 export function DDIMedium() {
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <h3 className="text-lg font-semibold tracking-tight">Your deal history hides structure you can&apos;t see by eye.</h3>
+
+      <div className="rounded-lg border bg-muted/30 p-4">
+        <RegionScatterVisual />
+      </div>
+
       <p className="text-sm leading-relaxed text-muted-foreground">
         Take about 500 deals of the same product at similar volumes — and prices are all
-        over the map. Nothing in the raw numbers suggests a pattern. But what if you color every
-        dot by where it shipped? California, PNW, Southwest, Great Plains — suddenly four distinct
-        price distributions separate out. The variance has real structure.
+        over the map. But color every dot by where it shipped and four distinct distributions
+        separate out. California averages $172. PNW lands at $148. Southwest at $124.
+        Great Plains at $96. Region alone explains 64% of the variance.
       </p>
+
+      <div className="rounded-lg border bg-muted/30 p-4">
+        <AttributeGridVisual />
+      </div>
+
       <p className="text-sm leading-relaxed text-muted-foreground">
-        Region was one of sixteen things we tested. The model checks every attribute on a
-        deal — region, channel, order size, customer tier, and more — for whether it actually moves
-        price. Most show no signal at all. In this case, four drivers explain most of the variance:
-        Region, Order Size, Customer Tier, and Channel. Twelve attributes turn out to be noise.
-        These four become the transactional pricing drivers.
+        Region was one of sixteen attributes tested. The model checks every attribute on a
+        deal for whether it actually moves price. Four drivers explain most of the variance:
+        Region (64%), Channel (18%), Order Size (7%), and Customer Tier (3%). Twelve attributes
+        are noise. These four become transactional pricing drivers — and each one becomes a control
+        knob. Four drivers create 16 interaction surfaces. Turn a knob, the price moves.
       </p>
     </div>
   );

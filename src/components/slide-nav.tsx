@@ -16,26 +16,30 @@ interface SlideNavProps {
   total: number;
   groups: NavGroup[];
   onNavigate: (index: number, subStep?: number) => void;
+  presentationTitle?: string;
 }
 
-export function SlideNav({ current, currentSubStep, total, groups, onNavigate }: SlideNavProps) {
+export function TopBar({
+  groups,
+  current,
+  currentSubStep,
+  onNavigate,
+  presentationTitle = "How the Model Works",
+}: SlideNavProps) {
   const [open, setOpen] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
 
-  const currentGroup = groups.find((g) =>
-    g.slides.some((s) => s.index === current && (s.subStep === undefined || s.subStep === currentSubStep)),
-  ) ?? groups.find((g) => g.slides.some((s) => s.index === current));
-
-  const currentGroupIndex = groups.indexOf(currentGroup!);
-
-  const substepIndex = currentGroup
-    ? currentGroup.slides.findIndex(
+  const currentGroup =
+    groups.find((g) =>
+      g.slides.some(
         (s) =>
           s.index === current &&
           (s.subStep === undefined || s.subStep === currentSubStep),
-      )
-    : 0;
+      ),
+    ) ?? groups.find((g) => g.slides.some((s) => s.index === current));
+
+  const currentGroupIndex = groups.indexOf(currentGroup!);
 
   const handleNavigate = useCallback(
     (index: number, subStep?: number) => {
@@ -70,10 +74,69 @@ export function SlideNav({ current, currentSubStep, total, groups, onNavigate }:
 
   return (
     <>
+      <header className="fixed top-0 left-0 right-0 z-50 border-b bg-background/80 backdrop-blur-sm">
+        <div className="mx-auto flex max-w-5xl items-center px-4 py-2.5">
+          <button
+            onClick={() => onNavigate(0)}
+            className="flex items-center gap-2 rounded-md px-2 py-1 text-sm font-bold tracking-tight text-foreground transition-colors hover:bg-muted/50"
+            aria-label="Go to first slide"
+          >
+            <svg viewBox="0 0 36 36" className="size-5 shrink-0" aria-hidden="true">
+              <rect x="0" y="0" width="15" height="15" rx="2" fill="#EF8B1D" />
+              <rect x="19" y="0" width="15" height="15" rx="2" fill="#E56910" />
+              <rect x="0" y="19" width="15" height="15" rx="2" fill="#00446A" />
+              <rect x="19" y="19" width="15" height="15" rx="2" fill="#E56910" />
+            </svg>
+            {presentationTitle}
+          </button>
+
+          <button
+            ref={triggerRef}
+            onClick={() => setOpen(!open)}
+            className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-muted/50"
+          >
+            {currentGroup?.label ?? ""}
+            <ChevronDown
+              className={cn(
+                "size-3.5 text-muted-foreground transition-transform",
+                open && "rotate-180",
+              )}
+            />
+          </button>
+
+          <div className="ml-auto flex items-center gap-1">
+            {groups.map((g, gi) => {
+              const groupDone = g.slides.every(
+                (s) =>
+                  s.index < current ||
+                  (s.index === current &&
+                    s.subStep !== undefined &&
+                    currentSubStep !== undefined &&
+                    s.subStep < currentSubStep),
+              );
+              const groupActive = gi === currentGroupIndex;
+              return (
+                <span
+                  key={gi}
+                  className={cn(
+                    "h-1.5 rounded-full transition-all",
+                    groupActive
+                      ? "w-5 bg-[#00446a]"
+                      : groupDone
+                        ? "w-1.5 bg-[#00446a]/40"
+                        : "w-1.5 bg-muted-foreground/25",
+                  )}
+                />
+              );
+            })}
+          </div>
+        </div>
+      </header>
+
       {open && (
         <div
           ref={panelRef}
-          className="fixed bottom-14 left-1/2 z-50 w-full max-w-md -translate-x-1/2 rounded-t-xl border border-b-0 bg-background/95 shadow-lg backdrop-blur-sm"
+          className="fixed top-[49px] left-1/2 z-50 w-full max-w-md -translate-x-1/2 rounded-b-xl border border-t-0 bg-background/95 shadow-lg backdrop-blur-sm"
         >
           <div className="max-h-[60vh] overflow-y-auto p-3">
             {groups.map((group, gi) => {
@@ -115,124 +178,96 @@ export function SlideNav({ current, currentSubStep, total, groups, onNavigate }:
                             : "bg-muted text-muted-foreground/60",
                       )}
                     >
-                      {groupDone ? (
-                        <Check className="size-3" />
-                      ) : (
-                        gi + 1
-                      )}
+                      {groupDone ? <Check className="size-3" /> : gi + 1}
                     </span>
                     {group.label}
                   </button>
-
-                  {group.slides.length > 1 && (
-                    <div className="ml-6 border-l border-muted pl-3 py-0.5">
-                      {group.slides.map((slide) => {
-                        const isActive =
-                          slide.index === current &&
-                          (slide.subStep === undefined ||
-                            slide.subStep === currentSubStep);
-                        const isDone =
-                          slide.index < current ||
-                          (slide.index === current &&
-                            slide.subStep !== undefined &&
-                            currentSubStep !== undefined &&
-                            slide.subStep < currentSubStep);
-                        return (
-                          <button
-                            key={`${slide.index}-${slide.subStep ?? ""}`}
-                            onClick={() =>
-                              handleNavigate(slide.index, slide.subStep)
-                            }
-                            className={cn(
-                              "flex w-full items-center gap-2 rounded px-2 py-1 text-left text-xs transition-colors",
-                              isActive
-                                ? "bg-[#00446a]/5 font-medium text-[#00446a]"
-                                : isDone
-                                  ? "text-muted-foreground hover:bg-muted/40"
-                                  : "text-foreground/50 hover:bg-muted/40",
-                            )}
-                          >
-                            <span
-                              className={cn(
-                                "size-1.5 shrink-0 rounded-full",
-                                isActive
-                                  ? "bg-[#00446a]"
-                                  : isDone
-                                    ? "bg-muted-foreground/40"
-                                    : "bg-foreground/20",
-                              )}
-                            />
-                            {slide.label}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
                 </div>
               );
             })}
           </div>
         </div>
       )}
+    </>
+  );
+}
 
-      <nav className="fixed bottom-0 left-0 right-0 z-50 border-t bg-background/80 backdrop-blur-sm">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-2.5">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onNavigate(current - 1)}
-            disabled={current === 0}
-            className="text-muted-foreground"
-          >
-            <ChevronLeft className="size-4" />
-            Back
-          </Button>
+export function BottomBar({
+  current,
+  currentSubStep,
+  total,
+  groups,
+  onNavigate,
+}: SlideNavProps) {
+  const currentGroup =
+    groups.find((g) =>
+      g.slides.some(
+        (s) =>
+          s.index === current &&
+          (s.subStep === undefined || s.subStep === currentSubStep),
+      ),
+    ) ?? groups.find((g) => g.slides.some((s) => s.index === current));
 
-          <button
-            ref={triggerRef}
-            onClick={() => setOpen(!open)}
-            className="flex flex-col items-center gap-1 rounded-md px-4 py-1 transition-colors hover:bg-muted/50"
-          >
-            <span className="flex items-center gap-1 text-sm font-medium text-foreground">
-              {currentGroup?.label ?? ""}
-              <ChevronDown
-                className={cn(
-                  "size-3.5 text-muted-foreground transition-transform",
-                  open && "rotate-180",
-                )}
-              />
-            </span>
-            {currentGroup && currentGroup.slides.length > 1 && (
-              <div className="flex items-center gap-1">
-                {currentGroup.slides.map((_, i) => (
-                  <span
-                    key={i}
-                    className={cn(
-                      "h-1 rounded-full transition-all",
-                      i === substepIndex
-                        ? "w-4 bg-[#00446a]"
-                        : i < substepIndex
-                          ? "w-1.5 bg-[#00446a]/30"
-                          : "w-1.5 bg-muted-foreground/25",
-                    )}
-                  />
-                ))}
-              </div>
-            )}
-          </button>
+  return (
+    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t bg-background/80 backdrop-blur-sm">
+      <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-2.5">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => onNavigate(current - 1)}
+          disabled={current === 0}
+          className="shrink-0 text-muted-foreground"
+        >
+          <ChevronLeft className="size-4" />
+          Back
+        </Button>
 
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onNavigate(current + 1)}
-            disabled={current === total - 1}
-            className="text-muted-foreground"
-          >
-            Next
-            <ChevronRight className="size-4" />
-          </Button>
-        </div>
-      </nav>
+        {currentGroup && currentGroup.slides.length > 1 && (
+          <div className="flex items-center gap-1 overflow-x-auto px-2">
+            {currentGroup.slides.map((slide) => {
+              const isActive =
+                slide.index === current &&
+                (slide.subStep === undefined ||
+                  slide.subStep === currentSubStep);
+              return (
+                <button
+                  key={`${slide.index}-${slide.subStep ?? ""}`}
+                  onClick={() => onNavigate(slide.index, slide.subStep)}
+                  className={cn(
+                    "whitespace-nowrap rounded-full px-3 py-1 text-xs font-medium transition-colors",
+                    isActive
+                      ? "bg-[#00446a] text-white"
+                      : "bg-muted text-muted-foreground hover:bg-muted/80",
+                  )}
+                >
+                  {slide.label}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => onNavigate(current + 1)}
+          disabled={current === total - 1}
+          className="shrink-0 text-muted-foreground"
+        >
+          Next
+          <ChevronRight className="size-4" />
+        </Button>
+      </div>
+    </nav>
+  );
+}
+
+// Keep backward-compat export for easy migration
+export function SlideNav(props: SlideNavProps) {
+  return (
+    <>
+      <TopBar {...props} />
+      <BottomBar {...props} />
     </>
   );
 }

@@ -1,5 +1,7 @@
 "use client";
 
+import { AutoTuneVisual } from "@/components/visuals/auto-tune";
+
 const P = "#00446a";
 const O = "#D97C14";
 const G = "#2e7d32";
@@ -50,7 +52,7 @@ export function OneModelLow() {
 /* ── Medium depth: Narrative explanation ── */
 export function OneModelMedium() {
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <h3 className="text-lg font-semibold tracking-tight">We combine four distinct inputs into a single model.</h3>
       <p className="text-sm leading-relaxed text-muted-foreground">
         Your transaction history tells us what has happened. Market and competitive signals tell us
@@ -59,11 +61,18 @@ export function OneModelMedium() {
         how you run the business. The model synthesizes all four into pricing recommendations no
         single source could produce alone.
       </p>
+
+      <h4 className="text-base font-semibold tracking-tight">ML tunes every knob, for every deal.</h4>
+
+      <div className="rounded-lg border bg-muted/30 p-4">
+        <AutoTuneVisual />
+      </div>
+
       <p className="text-sm leading-relaxed text-muted-foreground">
-        Each input enriches the others. Data alone misses context. Market signals alone miss your
-        specific cost structure. Our expertise alone can&apos;t account for your unique constraints.
-        Your rules alone don&apos;t optimize. Together, the model captures what any single
-        perspective would miss.
+        Each significant driver becomes a control knob. Four drivers create 16 interaction surfaces.
+        A human can&apos;t tune hundreds of interacting variables across thousands of SKU-customer
+        pairs. ML tunes every knob, for every deal, simultaneously. Knobs settle. Prices land back
+        on the optimal curve.
       </p>
     </div>
   );

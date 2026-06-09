@@ -15,15 +15,9 @@ import {
   ConfiguredProductsSlide,
   ConfiguredServicesSlide,
 } from "@/components/quoting-apps-slide";
-import {
-  WalkthroughSlide,
-  TOTAL_BEATS,
-  BEAT_LABELS,
-} from "@/components/walkthrough-slide";
 
 type SlideConfig =
   | { kind: "intro" }
-  | { kind: "walkthrough" }
   | { kind: "transition" }
   | {
       kind: "build";
@@ -54,11 +48,9 @@ const SECTION_GROUPS: SectionGroup[] = [
     navLabel: "Execution",
     title: "Execution",
     description:
-      "Every quote your team generates — email, chat, configured products — creates execution data that feeds the model.",
+      "Quotes generated through email, chat, and configured products produce transactional data the model trains on.",
     detailSlides: [
-      { kind: "quoting", component: "email", label: "Email Quoting" },
-      { kind: "quoting", component: "products", label: "Configured Products" },
-      { kind: "quoting", component: "services", label: "Configured Services" },
+      { kind: "section", sectionIdx: 0, label: "Execution Data" },
     ],
   },
   {
@@ -66,10 +58,10 @@ const SECTION_GROUPS: SectionGroup[] = [
     navLabel: "Deal Data",
     title: "Data",
     description:
-      "Your deal history — won, lost, and negotiated outcomes. The raw material the model learns from.",
+      "Historical deal outcomes — wins, losses, and negotiated prices — form the training set the model learns from.",
     detailSlides: [
-      { kind: "section", sectionIdx: 0, label: "The Problem" },
-      { kind: "section", sectionIdx: 1, label: "Finding Structure" },
+      { kind: "section", sectionIdx: 1, label: "The Problem" },
+      { kind: "section", sectionIdx: 2, label: "Finding Structure" },
     ],
   },
   {
@@ -77,10 +69,10 @@ const SECTION_GROUPS: SectionGroup[] = [
     navLabel: "Market Signals",
     title: "Market Signals",
     description:
-      "Competitor pricing, market conditions, and external benchmarks that put your deals in context.",
+      "Competitor pricing, commodity indices, and external benchmarks are ingested as features that adjust model output in real time.",
     detailSlides: [
-      { kind: "section", sectionIdx: 2, label: "Environmental Factors" },
-      { kind: "section", sectionIdx: 8, label: "Market Shifts" },
+      { kind: "section", sectionIdx: 3, label: "Environmental Factors" },
+      { kind: "section", sectionIdx: 9, label: "Market Shifts" },
     ],
   },
   {
@@ -88,10 +80,10 @@ const SECTION_GROUPS: SectionGroup[] = [
     navLabel: "Expertise",
     title: "Expertise",
     description:
-      "Our industry knowledge combined with your in-house pricing rules and strategy.",
+      "Industry-specific pricing logic and your internal business rules are encoded as constraints and weight adjustments in the model.",
     detailSlides: [
-      { kind: "section", sectionIdx: 3, label: "Industry Expertise" },
-      { kind: "section", sectionIdx: 4, label: "In-House Expertise" },
+      { kind: "section", sectionIdx: 4, label: "Industry Expertise" },
+      { kind: "section", sectionIdx: 5, label: "In-House Expertise" },
     ],
   },
   {
@@ -99,12 +91,12 @@ const SECTION_GROUPS: SectionGroup[] = [
     navLabel: "The Model",
     title: "The Model",
     description:
-      "Four inputs converge into one deterministic ML engine — it doesn't guess, it calculates.",
+      "One deterministic ML model processes everything — not generative AI, not rules-based. It calculates.",
     detailSlides: [
-      { kind: "section", sectionIdx: 5, label: "One Model" },
-      { kind: "section", sectionIdx: 6, label: "Why ML, Not Gen AI" },
-      { kind: "section", sectionIdx: 7, label: "Optimal Curve" },
-      { kind: "section", sectionIdx: 9, label: "It Learns" },
+      { kind: "section", sectionIdx: 6, label: "One Model" },
+      { kind: "section", sectionIdx: 7, label: "Why ML, Not Gen AI" },
+      { kind: "section", sectionIdx: 8, label: "Optimal Curve" },
+      { kind: "section", sectionIdx: 10, label: "It Learns" },
     ],
   },
   {
@@ -112,7 +104,7 @@ const SECTION_GROUPS: SectionGroup[] = [
     navLabel: "Conviction",
     title: "Conviction",
     description:
-      "The model assigns a confidence level — high-confidence quotes auto-approve, low-confidence get flagged for review.",
+      "Each recommendation includes a confidence score. High-confidence quotes can auto-approve; low-confidence ones route to review.",
     detailSlides: [],
   },
   {
@@ -120,9 +112,9 @@ const SECTION_GROUPS: SectionGroup[] = [
     navLabel: "Plan",
     title: "Plan",
     description:
-      "Pricing drivers and talking points that arm your team for the customer conversation.",
+      "The model outputs ceiling, floor, and target prices along with the drivers behind each — giving reps context, not just a number.",
     detailSlides: [
-      { kind: "section", sectionIdx: 10, label: "Pricing Structures" },
+      { kind: "section", sectionIdx: 11, label: "Pricing Structures" },
     ],
   },
   {
@@ -130,9 +122,9 @@ const SECTION_GROUPS: SectionGroup[] = [
     navLabel: "Negotiate",
     title: "Negotiate",
     description:
-      "Guardrails and escalation paths — the model guides negotiations within your strategy.",
+      "Guardrails define how far a rep can move from target before escalation. The model enforces concession strategy automatically.",
     detailSlides: [
-      { kind: "section", sectionIdx: 11, label: "Maturity & Path Forward" },
+      { kind: "section", sectionIdx: 12, label: "Maturity & Path Forward" },
     ],
   },
 ];
@@ -141,24 +133,14 @@ const SLIDES: SlideConfig[] = [];
 const NAV_GROUPS: NavGroup[] = [];
 
 SLIDES.push({ kind: "intro" });
+SLIDES.push({ kind: "transition" });
 NAV_GROUPS.push({
   label: "Introduction",
-  slides: [{ index: 0, label: "Welcome" }],
+  slides: [
+    { index: 0, label: "Welcome" },
+    { index: 1, label: "Overview" },
+  ],
 });
-
-const WALKTHROUGH_INDEX = SLIDES.length;
-SLIDES.push({ kind: "walkthrough" });
-NAV_GROUPS.push({
-  label: "Overview",
-  slides: BEAT_LABELS.map((label, i) => ({
-    index: WALKTHROUGH_INDEX,
-    label,
-    subStep: i,
-  })),
-});
-
-const TRANSITION_INDEX = SLIDES.length;
-SLIDES.push({ kind: "transition" });
 
 const accumulated: DiagramNode[] = [];
 
@@ -200,47 +182,21 @@ NAV_GROUPS.push({
 
 export default function Home() {
   const [slide, setSlide] = useState(0);
-  const [wtBeat, setWtBeat] = useState(0);
-  const [wtRevealed, setWtRevealed] = useState(false);
   const total = SLIDES.length;
-
-  const isWalkthrough = SLIDES[slide]?.kind === "walkthrough";
-
-  useEffect(() => {
-    if (!isWalkthrough || wtRevealed) return;
-    const timer = setTimeout(() => setWtRevealed(true), 3200);
-    return () => clearTimeout(timer);
-  }, [isWalkthrough, wtRevealed]);
 
   const navigate = useCallback(
     (index: number, subStep?: number) => {
       if (subStep !== undefined) {
         if (index >= 0 && index < total) {
           setSlide(index);
-          setWtBeat(subStep);
         }
         return;
       }
-
-      if (isWalkthrough && index === slide + 1 && wtBeat < TOTAL_BEATS - 1) {
-        setWtBeat((b) => b + 1);
-        return;
-      }
-      if (isWalkthrough && index === slide - 1 && wtBeat > 0) {
-        setWtBeat((b) => b - 1);
-        return;
-      }
-      if (!isWalkthrough && index === WALKTHROUGH_INDEX && slide === WALKTHROUGH_INDEX + 1) {
-        setSlide(index);
-        setWtBeat(TOTAL_BEATS - 1);
-        return;
-      }
-
       if (index >= 0 && index < total) {
         setSlide(index);
       }
     },
-    [total, slide, isWalkthrough, wtBeat],
+    [total],
   );
 
   useEffect(() => {
@@ -261,56 +217,38 @@ export default function Home() {
 
   return (
     <>
-      <main className="flex min-h-screen flex-col items-center justify-start pb-16">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={slide}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.3, ease: "easeInOut" }}
-            className="w-full"
-          >
-            {config.kind === "intro" && <IntroSlide />}
-            {config.kind === "walkthrough" && (
-              <WalkthroughSlide beat={wtBeat} skipEntrance={wtRevealed} />
-            )}
-            {config.kind === "transition" && (
-              <TransitionSlide
-                onDiveDeeper={() => navigate(TRANSITION_INDEX + 1)}
-                onWrapUp={() => navigate(END_INDEX)}
-              />
-            )}
-            {config.kind === "build" && (
-              <BuildStepSlide
-                visibleNodes={config.visibleNodes}
-                activeNode={config.activeNode}
-                title={config.title}
-                description={config.description}
-              />
-            )}
-            {config.kind === "complete" && <CompletePictureSlide />}
-            {config.kind === "quoting" && config.component === "email" && (
-              <EmailQuotingSlide />
-            )}
-            {config.kind === "quoting" && config.component === "products" && (
-              <ConfiguredProductsSlide />
-            )}
-            {config.kind === "quoting" && config.component === "services" && (
-              <ConfiguredServicesSlide />
-            )}
-            {config.kind === "section" && (
-              <SectionSlide section={sections[config.sectionIdx]} />
-            )}
-            {config.kind === "end" && (
-              <EndSlide onRestart={() => navigate(0)} />
-            )}
-          </motion.div>
-        </AnimatePresence>
+      <main className="flex min-h-screen flex-col items-center justify-start pt-14 pb-16">
+        <div key={slide} className="w-full animate-fade-in">
+          {config.kind === "intro" && <IntroSlide />}
+          {config.kind === "transition" && <TransitionSlide />}
+          {config.kind === "build" && (
+            <BuildStepSlide
+              visibleNodes={config.visibleNodes}
+              activeNode={config.activeNode}
+              title={config.title}
+              description={config.description}
+            />
+          )}
+          {config.kind === "complete" && <CompletePictureSlide />}
+          {config.kind === "quoting" && config.component === "email" && (
+            <EmailQuotingSlide />
+          )}
+          {config.kind === "quoting" && config.component === "products" && (
+            <ConfiguredProductsSlide />
+          )}
+          {config.kind === "quoting" && config.component === "services" && (
+            <ConfiguredServicesSlide />
+          )}
+          {config.kind === "section" && (
+            <SectionSlide section={sections[config.sectionIdx]} />
+          )}
+          {config.kind === "end" && (
+            <EndSlide onRestart={() => navigate(0)} />
+          )}
+        </div>
       </main>
       <SlideNav
         current={slide}
-        currentSubStep={isWalkthrough ? wtBeat : undefined}
         total={total}
         groups={NAV_GROUPS}
         onNavigate={navigate}
@@ -354,7 +292,7 @@ function IntroBackdrop() {
           y1="0"
           x2={100 * i}
           y2="700"
-          stroke="rgba(255,255,255,0.03)"
+          stroke="rgba(255,255,255,0.07)"
           strokeWidth="1"
         />
       ))}
@@ -365,7 +303,7 @@ function IntroBackdrop() {
           y1={100 * i}
           x2="1200"
           y2={100 * i}
-          stroke="rgba(255,255,255,0.03)"
+          stroke="rgba(255,255,255,0.07)"
           strokeWidth="1"
         />
       ))}
@@ -386,7 +324,7 @@ function IntroBackdrop() {
           cy={cy}
           r={r}
           fill={i % 5 === 0 ? "#E56910" : i % 3 === 0 ? "#21A5D5" : "white"}
-          opacity={i % 5 === 0 ? 0.15 : 0.06}
+          opacity={i % 5 === 0 ? 0.3 : 0.14}
         />
       ))}
 
@@ -394,18 +332,49 @@ function IntroBackdrop() {
       <path
         d="M80 520 C200 510, 300 480, 450 420 S700 300, 900 250 S1050 210, 1140 190"
         fill="none"
-        stroke="rgba(229,105,16,0.12)"
+        stroke="rgba(229,105,16,0.22)"
         strokeWidth="2.5"
         strokeLinecap="round"
       />
       <path
         d="M80 540 C200 530, 300 500, 450 450 S700 340, 900 290 S1050 250, 1140 230"
         fill="none"
-        stroke="rgba(33,165,213,0.08)"
+        stroke="rgba(33,165,213,0.15)"
         strokeWidth="1.5"
         strokeLinecap="round"
       />
     </svg>
+  );
+}
+
+const MODEL_WORDS = ["Pricing", "Quoting", "Margin", "Deal Score", "Win Rate"];
+
+function RotatingWord() {
+  const [index, setIndex] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setIndex((i) => (i + 1) % MODEL_WORDS.length);
+    }, 1800);
+    return () => clearInterval(timer);
+  }, []);
+
+  return (
+    <span className="relative inline-flex flex-col items-start overflow-hidden align-bottom" style={{ height: "1.15em" }}>
+      <AnimatePresence mode="wait">
+        <motion.span
+          key={MODEL_WORDS[index]}
+          initial={{ y: "100%", opacity: 0 }}
+          animate={{ y: "0%", opacity: 1 }}
+          exit={{ y: "-100%", opacity: 0 }}
+          transition={{ duration: 0.2, ease: "easeInOut" }}
+          className="inline-block whitespace-nowrap"
+        >
+          {MODEL_WORDS[index]}
+        </motion.span>
+      </AnimatePresence>
+      <span className="absolute -bottom-0.5 left-0 h-1 w-full rounded-full bg-[#E56910]" />
+    </span>
   );
 }
 
@@ -423,10 +392,10 @@ function IntroSlide() {
         </div>
 
         <h1 className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl lg:text-6xl">
-          How We Build a{" "}
-          <span className="relative inline-block">
-            Pricing Model
-            <span className="absolute -bottom-1 left-0 h-1 w-full rounded-full bg-[#E56910]" />
+          <span className="block">How We Build a</span>
+          <span className="inline-flex items-baseline gap-[0.3em]">
+            <RotatingWord />
+            <span>Model</span>
           </span>
         </h1>
 
@@ -441,6 +410,37 @@ function IntroSlide() {
           <span className="inline-block animate-pulse">→</span>
         </div>
       </div>
+    </div>
+  );
+}
+
+function TransitionSlide() {
+  return (
+    <div className="mx-auto flex min-h-[calc(100vh-8rem)] max-w-5xl flex-col items-center justify-center px-6">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.92 }}
+        animate={{ opacity: 0.15, scale: 1 }}
+        transition={{ duration: 1.2, ease: "easeOut" }}
+        className="pointer-events-none absolute inset-x-0 top-14"
+      >
+        <div className="mx-auto max-w-5xl px-6">
+          <DiagramRoadmap />
+        </div>
+      </motion.div>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 0.3 }}
+        className="relative z-10 text-center"
+      >
+        <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+          Let&apos;s see how the model works
+        </h2>
+        <p className="mx-auto mt-3 max-w-lg text-base text-muted-foreground">
+          We&apos;ll build it up one piece at a time — starting with the inputs
+          and ending with what comes out.
+        </p>
+      </motion.div>
     </div>
   );
 }
@@ -460,11 +460,14 @@ function BuildStepSlide({
 
   return (
     <div className="mx-auto max-w-5xl px-6 py-10">
+      <div className="relative mx-auto w-full">
+        <DiagramRoadmap visibleNodes={visibleNodes} activeNode={activeNode} />
+      </div>
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
-        className="mb-6 text-center"
+        className="mt-8 text-center"
       >
         <span
           className="mb-2 inline-block rounded-full px-3 py-1 text-xs font-semibold text-white"
@@ -472,13 +475,10 @@ function BuildStepSlide({
         >
           {title}
         </span>
-        <p className="mx-auto mt-3 max-w-2xl text-lg text-muted-foreground">
+        <h2 className="mx-auto mt-3 max-w-2xl text-lg font-medium text-foreground">
           {description}
-        </p>
+        </h2>
       </motion.div>
-      <div className="relative mx-auto w-full">
-        <DiagramRoadmap visibleNodes={visibleNodes} activeNode={activeNode} />
-      </div>
     </div>
   );
 }
@@ -486,20 +486,20 @@ function BuildStepSlide({
 function CompletePictureSlide() {
   return (
     <div className="mx-auto max-w-5xl px-6 py-10">
-      <div className="mb-6 text-center">
+      <div className="relative mx-auto w-full">
+        <DiagramRoadmap animated />
+      </div>
+      <div className="mt-8 text-center">
         <span className="mb-2 inline-block rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
           The Complete Picture
         </span>
         <h2 className="mt-2 text-3xl font-bold tracking-tight">
           ML Pricing Model
         </h2>
-        <p className="mt-2 text-muted-foreground">
-          Four inputs converge into one model — continuously learning from
-          outcomes, driving pricing decisions on the right.
+        <p className="mt-2 font-medium text-foreground">
+          Four input categories feed one model. Each deal outcome retrains the
+          weights, producing three output types on the right.
         </p>
-      </div>
-      <div className="relative mx-auto w-full">
-        <DiagramRoadmap animated />
       </div>
     </div>
   );
@@ -519,67 +519,8 @@ function SectionSlide({
       low={section.low}
       medium={section.medium}
       high={section.high}
+      highSummary={section.highSummary}
     />
-  );
-}
-
-function TransitionSlide({
-  onDiveDeeper,
-  onWrapUp,
-}: {
-  onDiveDeeper: () => void;
-  onWrapUp: () => void;
-}) {
-  return (
-    <div className="mx-auto flex min-h-[calc(100vh-4rem)] max-w-3xl flex-col items-center justify-center px-6 text-center">
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
-      >
-        <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-          Want to go deeper?
-        </h2>
-        <p className="mx-auto mt-3 max-w-lg text-muted-foreground">
-          We can walk through each component in detail, or wrap up here.
-        </p>
-      </motion.div>
-
-      <div className="mt-10 flex flex-col gap-4 sm:flex-row sm:gap-6">
-        <motion.button
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.15 }}
-          onClick={onDiveDeeper}
-          className="group relative overflow-hidden rounded-xl border-2 border-[#00446a] bg-[#00446a] px-8 py-5 text-left transition-all hover:shadow-lg sm:w-64"
-        >
-          <span className="block text-lg font-semibold text-white">
-            Dive Deeper
-          </span>
-          <span className="mt-1 block text-sm text-white/70">
-            Walk through each piece of the model
-          </span>
-          <span className="mt-3 inline-block text-xs font-medium text-white/50">
-            Press Next →
-          </span>
-        </motion.button>
-
-        <motion.button
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.25 }}
-          onClick={onWrapUp}
-          className="group relative overflow-hidden rounded-xl border-2 border-gray-200 bg-white px-8 py-5 text-left transition-all hover:border-gray-300 hover:shadow-md sm:w-64"
-        >
-          <span className="block text-lg font-semibold text-gray-800">
-            That&apos;s All For Now
-          </span>
-          <span className="mt-1 block text-sm text-muted-foreground">
-            Jump to wrap-up
-          </span>
-        </motion.button>
-      </div>
-    </div>
   );
 }
 

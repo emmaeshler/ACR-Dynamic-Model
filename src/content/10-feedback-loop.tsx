@@ -1,5 +1,7 @@
 "use client";
 
+import { PredictedVsActualVisual } from "@/components/visuals/predicted-vs-actual";
+
 const P = "#00446a";
 const O = "#D97C14";
 const G = "#2e7d32";
@@ -57,24 +59,23 @@ export function FeedbackLoopLow() {
 /* ── Medium depth: Narrative explanation ── */
 export function FeedbackLoopMedium() {
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <h3 className="text-lg font-semibold tracking-tight">Every quote teaches the model.</h3>
+
+      <div className="rounded-lg border bg-muted/30 p-4">
+        <PredictedVsActualVisual />
+      </div>
+
       <p className="text-sm leading-relaxed text-muted-foreground">
-        A price goes out. The deal wins or loses — and the model sees the outcome. Won
-        at $4.20? A signal. Lost at $4.35? A signal too. Pricing isn&apos;t a one-time
-        deliverable; it&apos;s a continuous loop between your sales floor and the model.
-        The next price out the door is sharper than the one before it.
+        A price goes out. The deal wins or loses — and the model sees the outcome. Predicted margin
+        and win rate meet actual results — and the model adjusts. The orange dots show what the
+        model predicted. The teal dots show what actually happened. Every gap is a learning signal.
       </p>
       <p className="text-sm leading-relaxed text-muted-foreground">
         Your goals change too. This year you&apos;re growing share. Next year you&apos;re harvesting
-        margin. The same engine repoints — you change the objective, not the model. Every
-        constraint you set is still respected. Every input it learned from still applies. It just
-        aims at a different target.
-      </p>
-      <p className="text-sm leading-relaxed text-muted-foreground">
-        Early on, recommendations carry wider uncertainty. With each cycle, confidence intervals
-        narrow. Fewer prices need manual adjustment — tighter bands, higher confidence, ready to
-        approve.
+        margin. The same engine repoints — you change the objective, not the model. Early on,
+        recommendations carry wider uncertainty. With each cycle, confidence intervals narrow.
+        Fewer prices need manual adjustment — tighter bands, higher confidence, ready to approve.
       </p>
     </div>
   );

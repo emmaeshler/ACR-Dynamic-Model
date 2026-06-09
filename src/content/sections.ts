@@ -8,8 +8,10 @@ export interface SectionDefinition {
   low: ComponentType;
   medium: ComponentType;
   high: ComponentType;
+  highSummary: string;
 }
 
+import { ExecutionLow, ExecutionMedium, ExecutionHigh } from "./00-execution";
 import { ProblemLow, ProblemMedium, ProblemHigh } from "./01-the-problem";
 import { DDILow, DDIMedium, DDIHigh } from "./02-finding-structure";
 import { EnvFactorsLow, EnvFactorsMedium, EnvFactorsHigh } from "./03-environmental-factors";
@@ -25,6 +27,16 @@ import { MaturityLow, MaturityMedium, MaturityHigh } from "./12-maturity";
 
 export const sections: SectionDefinition[] = [
   {
+    slug: "execution",
+    order: 0,
+    title: "Execution Data",
+    caption: "Every customer interaction becomes training data.",
+    low: ExecutionLow,
+    medium: ExecutionMedium,
+    high: ExecutionHigh,
+    highSummary: "Email, configured products & service quoting tools",
+  },
+  {
     slug: "the-problem",
     order: 1,
     title: "The Problem",
@@ -32,6 +44,7 @@ export const sections: SectionDefinition[] = [
     low: ProblemLow,
     medium: ProblemMedium,
     high: ProblemHigh,
+    highSummary: "Revenue leakage quantification & margin erosion",
   },
   {
     slug: "finding-structure",
@@ -41,6 +54,7 @@ export const sections: SectionDefinition[] = [
     low: DDILow,
     medium: DDIMedium,
     high: DDIHigh,
+    highSummary: "Attributes, knobs & auto-tuned pricing",
   },
   {
     slug: "environmental-factors",
@@ -50,6 +64,7 @@ export const sections: SectionDefinition[] = [
     low: EnvFactorsLow,
     medium: EnvFactorsMedium,
     high: EnvFactorsHigh,
+    highSummary: "Signal ingestion & auto-retune mechanics",
   },
   {
     slug: "industry-expertise",
@@ -59,6 +74,7 @@ export const sections: SectionDefinition[] = [
     low: IndustryExpLow,
     medium: IndustryExpMedium,
     high: IndustryExpHigh,
+    highSummary: "Pocket price methodology & leak identification",
   },
   {
     slug: "in-house-expertise",
@@ -68,6 +84,7 @@ export const sections: SectionDefinition[] = [
     low: InHouseExpLow,
     medium: InHouseExpMedium,
     high: InHouseExpHigh,
+    highSummary: "Constraint functions & guardrail architecture",
   },
   {
     slug: "one-model",
@@ -77,6 +94,7 @@ export const sections: SectionDefinition[] = [
     low: OneModelLow,
     medium: OneModelMedium,
     high: OneModelHigh,
+    highSummary: "Feature engineering & pipeline architecture",
   },
   {
     slug: "why-ml-not-genai",
@@ -86,6 +104,7 @@ export const sections: SectionDefinition[] = [
     low: WhyMLLow,
     medium: WhyMLMedium,
     high: WhyMLHigh,
+    highSummary: "Why LLMs fail at pricing decisions",
   },
   {
     slug: "optimal-curve",
@@ -95,6 +114,7 @@ export const sections: SectionDefinition[] = [
     low: OptimalCurveLow,
     medium: OptimalCurveMedium,
     high: OptimalCurveHigh,
+    highSummary: "Objective function & elasticity modeling",
   },
   {
     slug: "market-shift",
@@ -104,6 +124,7 @@ export const sections: SectionDefinition[] = [
     low: MarketShiftLow,
     medium: MarketShiftMedium,
     high: MarketShiftHigh,
+    highSummary: "Detection algorithms & threshold tuning",
   },
   {
     slug: "feedback-loop",
@@ -113,6 +134,7 @@ export const sections: SectionDefinition[] = [
     low: FeedbackLoopLow,
     medium: FeedbackLoopMedium,
     high: FeedbackLoopHigh,
+    highSummary: "Retraining pipeline, drift detection & validation",
   },
   {
     slug: "pricing-structures",
@@ -122,6 +144,7 @@ export const sections: SectionDefinition[] = [
     low: PricingStructuresLow,
     medium: PricingStructuresMedium,
     high: PricingStructuresHigh,
+    highSummary: "Synthesize, steer, experiment & optimize stages",
   },
   {
     slug: "maturity",
@@ -131,5 +154,6 @@ export const sections: SectionDefinition[] = [
     low: MaturityLow,
     medium: MaturityMedium,
     high: MaturityHigh,
+    highSummary: "Control surfaces unlocked at each maturity level",
   },
 ];
