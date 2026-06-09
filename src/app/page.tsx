@@ -15,10 +15,16 @@ import {
   ConfiguredProductsSlide,
   ConfiguredServicesSlide,
 } from "@/components/quoting-apps-slide";
+import {
+  WalkthroughSlide,
+  TOTAL_BEATS,
+  BEAT_LABELS,
+} from "@/components/walkthrough-slide";
 
 type SlideConfig =
   | { kind: "intro" }
   | { kind: "transition" }
+  | { kind: "walkthrough" }
   | {
       kind: "build";
       visibleNodes: DiagramNode[];
@@ -134,12 +140,22 @@ const NAV_GROUPS: NavGroup[] = [];
 
 SLIDES.push({ kind: "intro" });
 SLIDES.push({ kind: "transition" });
+SLIDES.push({ kind: "walkthrough" });
+const WALKTHROUGH_INDEX = 2;
 NAV_GROUPS.push({
   label: "Introduction",
   slides: [
     { index: 0, label: "Welcome" },
     { index: 1, label: "Overview" },
   ],
+});
+NAV_GROUPS.push({
+  label: "Overview",
+  slides: BEAT_LABELS.slice(1).map((label, i) => ({
+    index: WALKTHROUGH_INDEX,
+    label,
+    subStep: i + 1,
+  })),
 });
 
 const accumulated: DiagramNode[] = [];
@@ -182,21 +198,38 @@ NAV_GROUPS.push({
 
 export default function Home() {
   const [slide, setSlide] = useState(0);
+  const [wtBeat, setWtBeat] = useState(0);
   const total = SLIDES.length;
+  const isWalkthrough = slide === WALKTHROUGH_INDEX;
 
   const navigate = useCallback(
     (index: number, subStep?: number) => {
       if (subStep !== undefined) {
         if (index >= 0 && index < total) {
           setSlide(index);
+          if (index === WALKTHROUGH_INDEX) setWtBeat(subStep);
         }
+        return;
+      }
+      if (isWalkthrough && index === slide + 1 && wtBeat < TOTAL_BEATS - 1) {
+        setWtBeat((b) => b + 1);
+        return;
+      }
+      if (isWalkthrough && index === slide - 1 && wtBeat > 1) {
+        setWtBeat((b) => b - 1);
+        return;
+      }
+      if (!isWalkthrough && index === WALKTHROUGH_INDEX && slide === WALKTHROUGH_INDEX + 1) {
+        setSlide(index);
+        setWtBeat(TOTAL_BEATS - 1);
         return;
       }
       if (index >= 0 && index < total) {
         setSlide(index);
+        if (index === WALKTHROUGH_INDEX) setWtBeat(1);
       }
     },
-    [total],
+    [total, slide, isWalkthrough, wtBeat],
   );
 
   useEffect(() => {
@@ -221,6 +254,9 @@ export default function Home() {
         <div key={slide} className="w-full animate-fade-in">
           {config.kind === "intro" && <IntroSlide />}
           {config.kind === "transition" && <TransitionSlide />}
+          {config.kind === "walkthrough" && (
+            <WalkthroughSlide beat={wtBeat} skipEntrance={wtBeat > 0} />
+          )}
           {config.kind === "build" && (
             <BuildStepSlide
               visibleNodes={config.visibleNodes}
@@ -249,6 +285,7 @@ export default function Home() {
       </main>
       <SlideNav
         current={slide}
+        currentSubStep={isWalkthrough ? wtBeat : undefined}
         total={total}
         groups={NAV_GROUPS}
         onNavigate={navigate}
@@ -355,7 +392,7 @@ function RotatingWord() {
   useEffect(() => {
     const timer = setInterval(() => {
       setIndex((i) => (i + 1) % MODEL_WORDS.length);
-    }, 1800);
+    }, 2500);
     return () => clearInterval(timer);
   }, []);
 
@@ -414,32 +451,60 @@ function IntroSlide() {
   );
 }
 
+const WALKTHROUGH_STEPS: {
+  nodes: DiagramNode[];
+  active?: DiagramNode;
+  label: string;
+}[] = [
+  {
+    nodes: ["execution", "data", "market", "expertise"],
+    active: "execution",
+    label: "It starts with your data",
+  },
+  {
+    nodes: ["execution", "data", "market", "expertise", "model"],
+    active: "model",
+    label: "One model processes everything",
+  },
+  {
+    nodes: [
+      "execution", "data", "market", "expertise",
+      "model", "conviction", "plan", "negotiate",
+    ],
+    active: "plan",
+    label: "And produces actionable outputs",
+  },
+];
+
 function TransitionSlide() {
+  const [step, setStep] = useState(0);
+
+  useEffect(() => {
+    if (step >= WALKTHROUGH_STEPS.length - 1) return;
+    const timer = setTimeout(() => setStep((s) => s + 1), 1800);
+    return () => clearTimeout(timer);
+  }, [step]);
+
+  const current = WALKTHROUGH_STEPS[step];
+
   return (
-    <div className="mx-auto flex min-h-[calc(100vh-8rem)] max-w-5xl flex-col items-center justify-center px-6">
+    <div className="mx-auto max-w-5xl px-6 py-10">
+      <div className="relative mx-auto w-full">
+        <DiagramRoadmap
+          visibleNodes={current.nodes}
+          activeNode={current.active}
+        />
+      </div>
       <motion.div
-        initial={{ opacity: 0, scale: 0.92 }}
-        animate={{ opacity: 0.15, scale: 1 }}
-        transition={{ duration: 1.2, ease: "easeOut" }}
-        className="pointer-events-none absolute inset-x-0 top-14"
-      >
-        <div className="mx-auto max-w-5xl px-6">
-          <DiagramRoadmap />
-        </div>
-      </motion.div>
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        key={step}
+        initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, delay: 0.3 }}
-        className="relative z-10 text-center"
+        transition={{ duration: 0.4 }}
+        className="mt-8 text-center"
       >
-        <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-          Let&apos;s see how the model works
+        <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
+          {current.label}
         </h2>
-        <p className="mx-auto mt-3 max-w-lg text-base text-muted-foreground">
-          We&apos;ll build it up one piece at a time — starting with the inputs
-          and ending with what comes out.
-        </p>
       </motion.div>
     </div>
   );
