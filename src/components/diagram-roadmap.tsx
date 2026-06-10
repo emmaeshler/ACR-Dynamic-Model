@@ -74,8 +74,8 @@ const OUTPUT_ARROWS = [
   { toNode: "negotiate" as DiagramNode, x1: 582, y1: 194, x2: 738, y2: 272 },
 ];
 
-const GHOST = 0.07;
-const GHOST_ARROW = 0.04;
+const GHOST = 0.22;
+const GHOST_ARROW = 0.12;
 
 function nodeOpacity(
   nodeId: DiagramNode,

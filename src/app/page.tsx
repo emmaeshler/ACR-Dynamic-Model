@@ -196,11 +196,25 @@ NAV_GROUPS.push({
   ],
 });
 
+const AI_TOTAL_STEPS = 5;
+
 export default function Home() {
   const [slide, setSlide] = useState(0);
   const [wtBeat, setWtBeat] = useState(0);
+  const [aiStep, setAiStep] = useState(0);
   const total = SLIDES.length;
   const isWalkthrough = slide === WALKTHROUGH_INDEX;
+  const isAiBeat = isWalkthrough && wtBeat === 6;
+
+  useEffect(() => {
+    if (wtBeat !== 6) setAiStep(0);
+  }, [wtBeat]);
+
+  useEffect(() => {
+    if (!isWalkthrough || wtBeat !== 0) return;
+    const timer = setTimeout(() => setWtBeat(1), 2500);
+    return () => clearTimeout(timer);
+  }, [isWalkthrough, wtBeat]);
 
   const navigate = useCallback(
     (index: number, subStep?: number) => {
@@ -209,6 +223,14 @@ export default function Home() {
           setSlide(index);
           if (index === WALKTHROUGH_INDEX) setWtBeat(subStep);
         }
+        return;
+      }
+      if (isAiBeat && index === slide + 1 && aiStep < AI_TOTAL_STEPS - 1) {
+        setAiStep((s) => s + 1);
+        return;
+      }
+      if (isAiBeat && index === slide - 1 && aiStep > 0) {
+        setAiStep((s) => s - 1);
         return;
       }
       if (isWalkthrough && index === slide + 1 && wtBeat < TOTAL_BEATS - 1) {
@@ -222,14 +244,15 @@ export default function Home() {
       if (!isWalkthrough && index === WALKTHROUGH_INDEX && slide === WALKTHROUGH_INDEX + 1) {
         setSlide(index);
         setWtBeat(TOTAL_BEATS - 1);
+        setAiStep(AI_TOTAL_STEPS - 1);
         return;
       }
       if (index >= 0 && index < total) {
         setSlide(index);
-        if (index === WALKTHROUGH_INDEX) setWtBeat(1);
+        if (index === WALKTHROUGH_INDEX) setWtBeat(0);
       }
     },
-    [total, slide, isWalkthrough, wtBeat],
+    [total, slide, isWalkthrough, isAiBeat, wtBeat, aiStep],
   );
 
   useEffect(() => {
@@ -250,12 +273,12 @@ export default function Home() {
 
   return (
     <>
-      <main className="flex min-h-screen flex-col items-center justify-start pt-14 pb-16">
+      <main className="flex min-h-screen flex-col items-center justify-start pt-14 pb-16 overflow-x-hidden">
         <div key={slide} className="w-full animate-fade-in">
           {config.kind === "intro" && <IntroSlide />}
-          {config.kind === "transition" && <TransitionSlide />}
+          {config.kind === "transition" && <TransitionSlide onNext={() => navigate(slide + 1)} />}
           {config.kind === "walkthrough" && (
-            <WalkthroughSlide beat={wtBeat} skipEntrance={wtBeat > 0} />
+            <WalkthroughSlide beat={wtBeat} skipEntrance={wtBeat > 0} aiStep={aiStep} onAiStepChange={setAiStep} />
           )}
           {config.kind === "build" && (
             <BuildStepSlide
@@ -276,7 +299,10 @@ export default function Home() {
             <ConfiguredServicesSlide />
           )}
           {config.kind === "section" && (
-            <SectionSlide section={sections[config.sectionIdx]} />
+            <SectionSlide
+              section={sections[config.sectionIdx]}
+              onContinue={() => navigate(slide + 1)}
+            />
           )}
           {config.kind === "end" && (
             <EndSlide onRestart={() => navigate(0)} />
@@ -451,61 +477,222 @@ function IntroSlide() {
   );
 }
 
-const WALKTHROUGH_STEPS: {
-  nodes: DiagramNode[];
-  active?: DiagramNode;
-  label: string;
-}[] = [
-  {
-    nodes: ["execution", "data", "market", "expertise"],
-    active: "execution",
-    label: "It starts with your data",
-  },
-  {
-    nodes: ["execution", "data", "market", "expertise", "model"],
-    active: "model",
-    label: "One model processes everything",
-  },
-  {
-    nodes: [
-      "execution", "data", "market", "expertise",
-      "model", "conviction", "plan", "negotiate",
-    ],
-    active: "plan",
-    label: "And produces actionable outputs",
-  },
+const OVERVIEW_LABELS = [
+  "It starts with your data",
+  "One model processes everything",
+  "And produces actionable outputs",
+  "And every outcome makes it smarter",
 ];
 
-function TransitionSlide() {
+const OV_W = 900, OV_H = 350;
+const OV_NAVY = "#00446a";
+const OV_BLUE = "#2563eb";
+const OV_ORANGE = "#D97C14";
+const OV_GREEN = "#2e7d32";
+const OV_MUTED = "#94a3b8";
+
+const INPUT_COLORS = [OV_BLUE, OV_NAVY, OV_ORANGE, OV_GREEN];
+const INPUT_Y = [80, 130, 180, 230];
+const OUTPUT_COLORS = [OV_BLUE, OV_ORANGE, OV_GREEN];
+const OUTPUT_Y = [100, 160, 220];
+
+const MODEL_X = 380, MODEL_Y = 100, MODEL_W = 140, MODEL_H = 120;
+const FEEDBACK_COLOR = "#2e7d32";
+const FEEDBACK_PATH = `M${MODEL_X + MODEL_W},${MODEL_Y + MODEL_H} C${MODEL_X + MODEL_W + 80},${MODEL_Y + MODEL_H + 90} ${MODEL_X - 80},${MODEL_Y + MODEL_H + 90} ${MODEL_X},${MODEL_Y + MODEL_H}`;
+
+function ovInputPath(i: number) {
+  const y = INPUT_Y[i];
+  const endY = MODEL_Y + MODEL_H / 2;
+  return `M60,${y} C200,${y} 300,${endY} ${MODEL_X},${endY}`;
+}
+
+function ovOutputPath(i: number) {
+  const y = OUTPUT_Y[i];
+  const startY = MODEL_Y + MODEL_H / 2;
+  return `M${MODEL_X + MODEL_W},${startY} C600,${startY} 700,${y} 840,${y}`;
+}
+
+function ovSamplePath(d: string, steps = 10): { x: number; y: number }[] {
+  const m = d.match(
+    /M([\d.]+),([\d.]+)\s*C([\d.]+),([\d.]+)\s+([\d.]+),([\d.]+)\s+([\d.]+),([\d.]+)/,
+  );
+  if (!m) return [];
+  const n = m.slice(1).map(Number);
+  const pts: { x: number; y: number }[] = [];
+  for (let i = 0; i <= steps; i++) {
+    const t = i / steps;
+    const u = 1 - t;
+    pts.push({
+      x: u ** 3 * n[0] + 3 * u ** 2 * t * n[2] + 3 * u * t ** 2 * n[4] + t ** 3 * n[6],
+      y: u ** 3 * n[1] + 3 * u ** 2 * t * n[3] + 3 * u * t ** 2 * n[5] + t ** 3 * n[7],
+    });
+  }
+  return pts;
+}
+
+function OvFlowDot({ pathD, color, delay }: { pathD: string; color: string; delay: number }) {
+  const pts = ovSamplePath(pathD, 10);
+  if (pts.length === 0) return null;
+  return (
+    <motion.circle
+      r={4}
+      fill={color}
+      animate={{
+        cx: pts.map((p) => p.x),
+        cy: pts.map((p) => p.y),
+        opacity: pts.map((_, i) => (i <= 0 || i >= pts.length - 1 ? 0 : 0.55)),
+      }}
+      transition={{ duration: 2.2, delay, repeat: Infinity, ease: "linear" }}
+    />
+  );
+}
+
+function TransitionSlide({ onNext }: { onNext?: () => void }) {
   const [step, setStep] = useState(0);
 
   useEffect(() => {
-    if (step >= WALKTHROUGH_STEPS.length - 1) return;
-    const timer = setTimeout(() => setStep((s) => s + 1), 1800);
+    if (step >= OVERVIEW_LABELS.length - 1) return;
+    const timer = setTimeout(() => setStep((s) => s + 1), 2200);
     return () => clearTimeout(timer);
   }, [step]);
 
-  const current = WALKTHROUGH_STEPS[step];
+  const showInputs = step >= 0;
+  const showModel = step >= 1;
+  const showOutputs = step >= 2;
+  const showFeedback = step >= 3;
 
   return (
-    <div className="mx-auto max-w-5xl px-6 py-10">
-      <div className="relative mx-auto w-full">
-        <DiagramRoadmap
-          visibleNodes={current.nodes}
-          activeNode={current.active}
-        />
+    <div className="mx-auto flex h-[calc(100vh-7.5rem)] max-w-5xl flex-col justify-center px-6">
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={step}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -10 }}
+          transition={{ duration: 0.4 }}
+          className="mb-6 text-center"
+        >
+          <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
+            {OVERVIEW_LABELS[step]}
+          </h2>
+        </motion.div>
+      </AnimatePresence>
+      <div className="relative mx-auto w-full max-h-[calc(100vh-14rem)]">
+        <svg viewBox={`0 0 ${OV_W} ${OV_H}`} className="w-full" role="img" aria-label="Abstract data flow into ML model">
+
+          {/* Input paths */}
+          {showInputs && INPUT_COLORS.map((color, i) => (
+            <motion.g key={`in-${i}`} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.15, duration: 0.4 }}>
+              <path d={ovInputPath(i)} fill="none" stroke={color} strokeWidth={2} strokeOpacity={0.2} />
+              <OvFlowDot pathD={ovInputPath(i)} color={color} delay={i * 0.4} />
+              <OvFlowDot pathD={ovInputPath(i)} color={color} delay={i * 0.4 + 1.1} />
+              <circle cx={52} cy={INPUT_Y[i]} r={6} fill={color} fillOpacity={0.15} stroke={color} strokeWidth={1.5} strokeOpacity={0.3} />
+            </motion.g>
+          ))}
+
+          {/* Input zone label */}
+          {showInputs && (
+            <motion.text
+              x={52} y={60}
+              fontSize="11" fontWeight="600" fill={OV_MUTED} textAnchor="middle"
+              initial={{ opacity: 0 }} animate={{ opacity: 0.6 }} transition={{ delay: 0.5 }}
+            >
+              DATA
+            </motion.text>
+          )}
+
+          {/* Model box */}
+          {showModel && (
+            <motion.g initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.5 }}>
+              <rect x={MODEL_X} y={MODEL_Y} width={MODEL_W} height={MODEL_H} rx={12} fill={OV_NAVY} />
+              <text x={MODEL_X + MODEL_W / 2} y={MODEL_Y + 50} fontSize="16" fontWeight="700" fill="white" textAnchor="middle">
+                ML Model
+              </text>
+              <text x={MODEL_X + MODEL_W / 2} y={MODEL_Y + 70} fontSize="10" fill="rgba(255,255,255,0.7)" textAnchor="middle">
+                Deterministic pricing
+              </text>
+              <motion.rect
+                x={MODEL_X + 25} y={MODEL_Y + 85} height={3} rx={1.5}
+                fill="rgba(255,255,255,0.2)"
+                animate={{ width: [40, 90, 30, 70, 40] }}
+                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+              />
+              <motion.rect
+                x={MODEL_X + 25} y={MODEL_Y + 93} height={3} rx={1.5}
+                fill="rgba(255,255,255,0.15)"
+                animate={{ width: [70, 30, 60, 40, 70] }}
+                transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
+              />
+            </motion.g>
+          )}
+
+          {/* Output paths */}
+          {showOutputs && OUTPUT_COLORS.map((color, i) => (
+            <motion.g key={`out-${i}`} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.15, duration: 0.4 }}>
+              <path d={ovOutputPath(i)} fill="none" stroke={color} strokeWidth={2} strokeOpacity={0.2} />
+              <OvFlowDot pathD={ovOutputPath(i)} color={color} delay={i * 0.4} />
+              <OvFlowDot pathD={ovOutputPath(i)} color={color} delay={i * 0.4 + 1.1} />
+              <circle cx={848} cy={OUTPUT_Y[i]} r={6} fill={color} fillOpacity={0.15} stroke={color} strokeWidth={1.5} strokeOpacity={0.3} />
+            </motion.g>
+          ))}
+
+          {/* Output zone label */}
+          {showOutputs && (
+            <motion.text
+              x={848} y={80}
+              fontSize="11" fontWeight="600" fill={OV_MUTED} textAnchor="middle"
+              initial={{ opacity: 0 }} animate={{ opacity: 0.6 }} transition={{ delay: 0.3 }}
+            >
+              OUTPUTS
+            </motion.text>
+          )}
+
+          {/* Feedback arc */}
+          {showFeedback && (
+            <motion.g initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
+              <motion.path
+                d={FEEDBACK_PATH}
+                fill="none"
+                stroke={FEEDBACK_COLOR}
+                strokeWidth={2}
+                strokeDasharray="6 4"
+                strokeOpacity={0.35}
+                initial={{ pathLength: 0 }}
+                animate={{ pathLength: 1 }}
+                transition={{ duration: 1.2, ease: "easeInOut" }}
+              />
+              <OvFlowDot pathD={FEEDBACK_PATH} color={FEEDBACK_COLOR} delay={0.6} />
+              <OvFlowDot pathD={FEEDBACK_PATH} color={FEEDBACK_COLOR} delay={1.8} />
+              <motion.text
+                x={MODEL_X + MODEL_W / 2} y={MODEL_Y + MODEL_H + 58}
+                fontSize="10" fontWeight="600" fill={FEEDBACK_COLOR} textAnchor="middle"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 0.7 }}
+                transition={{ delay: 0.8, duration: 0.4 }}
+              >
+                LEARNS
+              </motion.text>
+            </motion.g>
+          )}
+        </svg>
       </div>
-      <motion.div
-        key={step}
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
-        className="mt-8 text-center"
-      >
-        <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
-          {current.label}
-        </h2>
-      </motion.div>
+
+      {showFeedback && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 2.5, duration: 0.6 }}
+          className="mt-6 flex items-center justify-center gap-2 text-sm text-muted-foreground"
+        >
+          Let&apos;s walk through each piece
+          <motion.span
+            animate={{ x: [0, 4, 0] }}
+            transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+          >
+            →
+          </motion.span>
+        </motion.div>
+      )}
     </div>
   );
 }
@@ -524,15 +711,12 @@ function BuildStepSlide({
   const color = getNodeColor(activeNode);
 
   return (
-    <div className="mx-auto max-w-5xl px-6 py-10">
-      <div className="relative mx-auto w-full">
-        <DiagramRoadmap visibleNodes={visibleNodes} activeNode={activeNode} />
-      </div>
+    <div className="mx-auto flex h-[calc(100vh-7.5rem)] max-w-5xl flex-col justify-center px-6">
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
-        className="mt-8 text-center"
+        className="mb-8 text-center"
       >
         <span
           className="mb-2 inline-block rounded-full px-3 py-1 text-xs font-semibold text-white"
@@ -540,10 +724,13 @@ function BuildStepSlide({
         >
           {title}
         </span>
-        <h2 className="mx-auto mt-3 max-w-2xl text-lg font-medium text-foreground">
+        <h2 className="mx-auto mt-2 max-w-2xl text-lg font-medium text-foreground">
           {description}
         </h2>
       </motion.div>
+      <div className="relative mx-auto w-full max-h-[calc(100vh-14rem)]">
+        <DiagramRoadmap visibleNodes={visibleNodes} activeNode={activeNode} />
+      </div>
     </div>
   );
 }
@@ -572,8 +759,10 @@ function CompletePictureSlide() {
 
 function SectionSlide({
   section,
+  onContinue,
 }: {
   section: (typeof sections)[number];
+  onContinue?: () => void;
 }) {
   return (
     <ConceptSection
@@ -585,6 +774,7 @@ function SectionSlide({
       medium={section.medium}
       high={section.high}
       highSummary={section.highSummary}
+      onContinue={onContinue}
     />
   );
 }

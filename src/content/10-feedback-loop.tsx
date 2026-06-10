@@ -114,6 +114,16 @@ export function FeedbackLoopHigh() {
           ships with a 90% prediction interval that narrows from 8-12% of price early on to 2-4%
           at maturity.
         </p>
+        <p>
+          <strong className="font-semibold text-foreground">Controlled experimentation.</strong>{" "}
+          The highest-quality learning signal comes from controlled experiments — randomly varying
+          prices on customer subsets and measuring outcomes against holdout groups. This gives the
+          model causally clean data rather than relying solely on observational patterns. Experiments
+          isolate the effect of a price change from seasonality, rep behavior, and market shifts,
+          answering &ldquo;what actually happens when we change this price?&rdquo; rather than
+          inferring it from historical correlation. Experiment results feed directly into the
+          retraining pipeline with elevated weight.
+        </p>
       </div>
     </div>
   );

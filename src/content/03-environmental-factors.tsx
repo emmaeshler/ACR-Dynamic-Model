@@ -74,6 +74,13 @@ export function EnvFactorsMedium() {
         today.&rdquo; When a competitor cuts and the whole market band slides down, your price
         re-anchors automatically — no rebuild, no project, no waiting on a quarterly refresh.
       </p>
+      <p className="text-sm leading-relaxed text-muted-foreground">
+        These signals translate directly into automated pricing rules. When inventory tightness
+        rises, the model nudges list prices up to protect margin on scarce items. When input costs
+        spike — raw materials, freight, components — the increase passes through to pricing
+        automatically. When a market benchmark shifts, affected product prices realign without
+        manual intervention.
+      </p>
     </div>
   );
 }

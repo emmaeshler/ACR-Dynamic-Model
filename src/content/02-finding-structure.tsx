@@ -1,5 +1,6 @@
 "use client";
 
+import { DealCardsHero } from "@/components/visuals/deal-cards-hero";
 import { RegionScatterVisual } from "@/components/visuals/region-scatter";
 import { AttributeGridVisual } from "@/components/visuals/attribute-grid";
 
@@ -55,12 +56,9 @@ function ScatterVisual() {
 export function DDILow() {
   return (
     <div className="space-y-4">
-      <div className="rounded-lg border bg-muted/30 p-6">
-        <ScatterVisual />
+      <div className="rounded-lg border bg-muted/30 p-4">
+        <DealCardsHero />
       </div>
-      <p className="text-center text-sm text-muted-foreground">
-        Same product. Wildly different prices. The structure is hiding in the data.
-      </p>
     </div>
   );
 }

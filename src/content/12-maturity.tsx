@@ -117,6 +117,16 @@ export function MaturityHigh() {
           precision. These constraints prevent organizations from overreaching on one dimension
           while lagging on its prerequisites.
         </p>
+        <p>
+          <strong className="font-semibold text-foreground">Mapping the four-stage framework.</strong>{" "}
+          The pricing stages map directly to the maturity ladder. Synthesize — the ML baseline that
+          finds typical prices from historical patterns — unlocks at L2 Generalize. Steer — automated
+          rules that adjust the baseline toward strategic intent — unlocks at L2 Guidance. Experiment
+          — controlled A/B tests that measure causal price impact — requires L3 Learning. Optimize —
+          causal elasticity models that find the profit-maximizing price — requires L4 Learning with
+          L3+ Generalize. Each stage builds on the prior one, and the maturity dimensions gate which
+          stages are meaningful to pursue.
+        </p>
       </div>
     </div>
   );

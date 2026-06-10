@@ -90,7 +90,7 @@ const ZONE_LABELS = {
    ═══════════════════════════════════════════════════════════════════ */
 
 function nodeOp(id: string, zone: string, beat: number): number {
-  if (beat === 0 || beat === 5) return 1;
+  if (beat === 0 || beat === 5 || beat === 6) return 1;
   if (beat === 4) return id === "conviction" || id === "negotiate" || id === "model" ? 1 : 0.1;
   if (beat === 1) return zone === "input" ? 1 : 0.1;
   if (beat === 2) return zone === "engine" ? 1 : 0.1;
@@ -100,6 +100,7 @@ function nodeOp(id: string, zone: string, beat: number): number {
 
 function isGlowing(id: string, zone: string, beat: number): boolean {
   if (beat === 0 || beat === 5) return false;
+  if (beat === 6) return true;
   if (beat === 4) return id === "conviction" || id === "negotiate" || id === "model";
   return (
     (beat === 1 && zone === "input") ||
@@ -109,7 +110,7 @@ function isGlowing(id: string, zone: string, beat: number): boolean {
 }
 
 function connOp(type: "input" | "output", beat: number): number {
-  if (beat === 0 || beat === 5) return 0.5;
+  if (beat === 0 || beat === 5 || beat === 6) return 0.5;
   if (beat === 1) return type === "input" ? 0.45 : 0.04;
   if (beat === 2) return type === "input" ? 0.35 : 0.04;
   if (beat === 3) return type === "output" ? 0.45 : 0.04;
@@ -118,7 +119,7 @@ function connOp(type: "input" | "output", beat: number): number {
 
 function fbOp(beat: number): number {
   if (beat === 4) return 0.75;
-  if (beat === 0 || beat === 5) return 0.4;
+  if (beat === 0 || beat === 5 || beat === 6) return 0.4;
   return 0.04;
 }
 
@@ -134,7 +135,7 @@ function zoneLabel(zone: "input" | "engine" | "output", beat: number): number {
   if (beat === 1 && zone === "input") return 0.7;
   if (beat === 2 && zone === "engine") return 0.7;
   if (beat === 3 && zone === "output") return 0.7;
-  if (beat === 5) return 0.35;
+  if (beat === 5 || beat === 6) return 0.35;
   return 0.15;
 }
 
@@ -232,12 +233,16 @@ function WTNodeBox({
   entranceDelay,
   fast,
   onNodeClick,
+  onNodeHover,
+  onNodeLeave,
 }: {
   node: NodeDef;
   beat: number;
   entranceDelay: number;
   fast: boolean;
   onNodeClick?: (nodeId: string) => void;
+  onNodeHover?: (nodeId: string) => void;
+  onNodeLeave?: () => void;
 }) {
   const opacity = nodeOp(node.id, node.zone, beat);
   const glow = isGlowing(node.id, node.zone, beat);
@@ -313,10 +318,12 @@ function WTNodeBox({
             {node.subtitle}
           </text>
 
-          {glow && onNodeClick && (
+          {glow && (onNodeClick || onNodeHover) && (
             <g
               className="cursor-pointer"
-              onClick={(e) => { e.stopPropagation(); onNodeClick(node.id); }}
+              onClick={onNodeClick ? (e) => { e.stopPropagation(); onNodeClick(node.id); } : undefined}
+              onMouseEnter={onNodeHover ? () => onNodeHover(node.id) : undefined}
+              onMouseLeave={onNodeLeave}
             >
               <circle cx={iconX} cy={iconY + iconR} r={iconR} fill={node.color} opacity={0.12} />
               <circle cx={iconX} cy={iconY + iconR} r={iconR} fill="none" stroke={node.color} strokeWidth={1.2} opacity={0.5} />
@@ -343,9 +350,11 @@ interface WalkthroughDiagramProps {
   beat: number;
   skipEntrance?: boolean;
   onNodeClick?: (nodeId: string) => void;
+  onNodeHover?: (nodeId: string) => void;
+  onNodeLeave?: () => void;
 }
 
-export function WalkthroughDiagram({ beat, skipEntrance = false, onNodeClick }: WalkthroughDiagramProps) {
+export function WalkthroughDiagram({ beat, skipEntrance = false, onNodeClick, onNodeHover, onNodeLeave }: WalkthroughDiagramProps) {
   const [fast, setFast] = useState(skipEntrance);
 
   useEffect(() => {
@@ -493,6 +502,8 @@ export function WalkthroughDiagram({ beat, skipEntrance = false, onNodeClick }: 
           entranceDelay={0.2 + i * 0.15}
           fast={fast}
           onNodeClick={onNodeClick}
+          onNodeHover={onNodeHover}
+          onNodeLeave={onNodeLeave}
         />
       ))}
 

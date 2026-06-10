@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useCallback } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { X } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { BLUE, ORANGE, GREEN, NAVY } from "./hub-spoke-diagram";
 import { WalkthroughDiagram } from "./walkthrough-diagram";
+import { AiAccelerationViz } from "./ai-acceleration-viz";
 
-export const TOTAL_BEATS = 6;
+export const TOTAL_BEATS = 7;
 
 interface BeatContent {
   badge: string;
@@ -54,6 +55,13 @@ const BEAT_CONTENT: BeatContent[] = [
     badgeColor: NAVY,
     title: "The Complete System",
     description: "Now let's walk through each piece.",
+  },
+  {
+    badge: "With AI",
+    badgeColor: "#E56910",
+    title: "What's Next",
+    description:
+      "Maintain engagement durations, accelerate impact. AI compresses the initial build and enables faster iteration cycles after go-live.",
   },
 ];
 
@@ -147,25 +155,78 @@ const NODE_DETAILS: Record<string, NodeDetail> = {
   },
 };
 
+const AI_STEP_CONTENT: BeatContent[] = [
+  {
+    badge: "With AI",
+    badgeColor: "#E56910",
+    title: "The Engagement Today",
+    description: "A traditional engagement follows a familiar arc — data, modeling, implementation. Each phase is sequential.",
+  },
+  {
+    badge: "With AI",
+    badgeColor: "#E56910",
+    title: "The Engagement With AI",
+    description: "AI compresses the initial build and unlocks faster iteration cycles after go-live.",
+  },
+  {
+    badge: "With AI",
+    badgeColor: "#E56910",
+    title: "Inside the Model Lifecycle",
+    description: "Let's look at what's happening inside — each model iteration follows this lifecycle.",
+  },
+  {
+    badge: "With AI",
+    badgeColor: "#E56910",
+    title: "AI Accelerates the Model",
+    description: "AI compresses or eliminates bottlenecks at every stage. The same lifecycle, dramatically faster.",
+  },
+  {
+    badge: "With AI",
+    badgeColor: "#E56910",
+    title: "Better Model, Better Outcomes",
+    description: "Faster iterations compound — a better model means better prices means better ROI.",
+  },
+];
+
+const AI_STEP_LABELS = ["Timeline", "With AI", "Model", "Accelerated", "Payoff"];
+
 interface WalkthroughSlideProps {
   beat: number;
   skipEntrance?: boolean;
+  aiStep?: number;
+  onAiStepChange?: (step: number) => void;
 }
 
-export function WalkthroughSlide({ beat, skipEntrance }: WalkthroughSlideProps) {
-  const content = BEAT_CONTENT[beat] ?? BEAT_CONTENT[0];
+export function WalkthroughSlide({ beat, skipEntrance, aiStep = 0, onAiStepChange }: WalkthroughSlideProps) {
+  const content = beat === 6 ? AI_STEP_CONTENT[aiStep] ?? AI_STEP_CONTENT[0] : BEAT_CONTENT[beat] ?? BEAT_CONTENT[0];
   const [activeDetail, setActiveDetail] = useState<NodeDetail | null>(null);
+  const leaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  function handleNodeClick(nodeId: string) {
+  const handleNodeHover = useCallback((nodeId: string) => {
+    if (leaveTimer.current) {
+      clearTimeout(leaveTimer.current);
+      leaveTimer.current = null;
+    }
     const detail = NODE_DETAILS[nodeId];
     if (detail) setActiveDetail(detail);
-  }
+  }, []);
+
+  const handleNodeLeave = useCallback(() => {
+    leaveTimer.current = setTimeout(() => setActiveDetail(null), 200);
+  }, []);
+
+  const handleTooltipEnter = useCallback(() => {
+    if (leaveTimer.current) {
+      clearTimeout(leaveTimer.current);
+      leaveTimer.current = null;
+    }
+  }, []);
 
   return (
     <div className="mx-auto max-w-5xl px-6 pt-4 pb-2">
       <AnimatePresence mode="wait">
         <motion.div
-          key={beat}
+          key={`${beat}-${aiStep}`}
           initial={{ opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -6 }}
@@ -187,76 +248,116 @@ export function WalkthroughSlide({ beat, skipEntrance }: WalkthroughSlideProps) 
         </motion.div>
       </AnimatePresence>
 
-      <WalkthroughDiagram
-        beat={beat}
-        skipEntrance={skipEntrance}
-        onNodeClick={handleNodeClick}
-      />
-
-      <AnimatePresence>
-        {activeDetail && (
-          <NodeDetailModal
-            detail={activeDetail}
-            onClose={() => setActiveDetail(null)}
+      <div className="relative">
+        {beat === 6 ? (
+          <AiAccelerationViz step={aiStep} />
+        ) : (
+          <WalkthroughDiagram
+            beat={beat}
+            skipEntrance={skipEntrance}
+            onNodeHover={handleNodeHover}
+            onNodeLeave={handleNodeLeave}
           />
         )}
-      </AnimatePresence>
+
+        <AnimatePresence>
+          {activeDetail && (
+            <NodeDetailTooltip
+              detail={activeDetail}
+              onMouseEnter={handleTooltipEnter}
+              onMouseLeave={handleNodeLeave}
+            />
+          )}
+        </AnimatePresence>
+      </div>
+
+      {beat === 6 && onAiStepChange && (
+        <div className="mt-4 flex items-center justify-center gap-3">
+          <button
+            onClick={() => aiStep > 0 && onAiStepChange(aiStep - 1)}
+            disabled={aiStep === 0}
+            className="rounded-full p-1 text-muted-foreground transition-colors hover:bg-muted disabled:opacity-30"
+          >
+            <ChevronLeft className="size-4" />
+          </button>
+          <div className="flex items-center gap-2">
+            {AI_STEP_LABELS.map((label, i) => (
+              <button
+                key={i}
+                onClick={() => onAiStepChange(i)}
+                className="flex flex-col items-center gap-1"
+              >
+                <div
+                  className="rounded-full transition-all"
+                  style={{
+                    width: i === aiStep ? 24 : 8,
+                    height: 8,
+                    backgroundColor: i === aiStep ? "#E56910" : i < aiStep ? "#E5691060" : "#d1d5db",
+                  }}
+                />
+                <span
+                  className="text-[9px] font-medium transition-opacity"
+                  style={{
+                    color: i === aiStep ? "#E56910" : "#9ca3af",
+                    opacity: i === aiStep ? 1 : 0.7,
+                  }}
+                >
+                  {label}
+                </span>
+              </button>
+            ))}
+          </div>
+          <button
+            onClick={() => aiStep < AI_STEP_LABELS.length - 1 && onAiStepChange(aiStep + 1)}
+            disabled={aiStep === AI_STEP_LABELS.length - 1}
+            className="rounded-full p-1 text-muted-foreground transition-colors hover:bg-muted disabled:opacity-30"
+          >
+            <ChevronRight className="size-4" />
+          </button>
+        </div>
+      )}
     </div>
   );
 }
 
-function NodeDetailModal({
+function NodeDetailTooltip({
   detail,
-  onClose,
+  onMouseEnter,
+  onMouseLeave,
 }: {
   detail: NodeDetail;
-  onClose: () => void;
+  onMouseEnter: () => void;
+  onMouseLeave: () => void;
 }) {
   return (
-    <>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.2 }}
-        className="fixed inset-0 z-50 bg-black/40"
-        onClick={onClose}
-      />
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95, y: 10 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.95, y: 10 }}
-        transition={{ duration: 0.2 }}
-        className="fixed inset-x-4 top-[20%] z-50 mx-auto max-w-md rounded-xl border border-border bg-white p-6 shadow-xl sm:inset-x-auto sm:w-[420px]"
-      >
-        <div className="mb-4 flex items-start justify-between">
-          <div className="flex items-center gap-3">
-            <div
-              className="size-3 rounded-full"
+    <motion.div
+      initial={{ opacity: 0, y: 6 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: 6 }}
+      transition={{ duration: 0.15 }}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+      className="absolute left-4 top-4 z-10 w-72 rounded-lg border border-border bg-white p-4 shadow-lg"
+    >
+      <div className="mb-2 flex items-center gap-2">
+        <div
+          className="size-2.5 rounded-full"
+          style={{ backgroundColor: detail.color }}
+        />
+        <h3 className="text-sm font-semibold">{detail.label}</h3>
+      </div>
+      <p className="text-xs text-muted-foreground">{detail.summary}</p>
+      <ul className="mt-2.5 space-y-1.5">
+        {detail.bullets.map((b, i) => (
+          <li key={i} className="flex items-start gap-2 text-xs">
+            <span
+              className="mt-1 block size-1.5 shrink-0 rounded-full"
               style={{ backgroundColor: detail.color }}
             />
-            <h3 className="text-lg font-semibold">{detail.label}</h3>
-          </div>
-          <button
-            onClick={onClose}
-            className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-          >
-            <X className="size-4" />
-          </button>
-        </div>
-        <p className="text-sm text-muted-foreground">{detail.summary}</p>
-        <ul className="mt-4 space-y-2">
-          {detail.bullets.map((b, i) => (
-            <li key={i} className="flex items-start gap-2 text-sm">
-              <span
-                className="mt-1.5 block size-1.5 shrink-0 rounded-full"
-                style={{ backgroundColor: detail.color }}
-              />
-              {b}
-            </li>
-          ))}
-        </ul>
-      </motion.div>
-    </>
+            {b}
+          </li>
+        ))}
+      </ul>
+    </motion.div>
   );
 }

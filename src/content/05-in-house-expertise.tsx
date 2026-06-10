@@ -108,6 +108,17 @@ export function InHouseExpHigh() {
           bands for high-data segments, wider for sparse ones. Adjustments within guardrails are
           logged but not flagged; adjustments outside trigger review.
         </p>
+        <p>
+          <strong className="font-semibold text-foreground">Automated steering rules.</strong>{" "}
+          Beyond hard constraints and strategic priorities, recurring business logic is encoded as
+          automated rules that fire after the ML baseline is set. List price rules respond to supply
+          signals — when inventory tightens, list prices nudge up; when input costs spike, the model
+          passes through the increase; when a market benchmark shifts, prices realign automatically.
+          Discount rules adjust for customer-level factors: growth targets trigger deeper discounts
+          for wallet share expansion, stable low-growth accounts get tightened discounts to harvest
+          margin, over-discounted history gets corrected rather than perpetuated, and churn-risk
+          accounts hold steady to protect at-risk renewals.
+        </p>
       </div>
     </div>
   );
