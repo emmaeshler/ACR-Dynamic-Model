@@ -154,10 +154,19 @@ const DOT_SWEEP_DELAY = DOTS.map(
   (d) => ((d.sqX - PAD) / (CHART_W - 2 * PAD)) * SWEEP_DURATION
 );
 
+/* ── Step narratives ── */
+const STEP_NARRATIVES = [
+  "The model now manages 14,200 prices × 2,400 accounts — let's see the impact with vs. without it.",
+  "Each manual review introduces errors and inconsistency — margin leaks with every decision.",
+  "The Dynamic Pricing Model optimizes every price point simultaneously.",
+  "The model analyzes segment elasticity, margins, and competitive position across every combination.",
+  "Prices snap to model-optimized positions — tighter to the demand curve, less leakage.",
+];
+
 /* ── Main slide ── */
 export const PROFIT_GROWTH_TOTAL_STEPS = 5;
 
-export function ProfitGrowthSlide({ step = 0 }: { step: number }) {
+export function ProfitGrowthSlide({ step = 0, onAutoAdvance }: { step: number; onAutoAdvance?: () => void }) {
   const showChart = step >= 1;
   const announcing = step === 2;
   const showScan = step >= 3;
@@ -170,7 +179,14 @@ export function ProfitGrowthSlide({ step = 0 }: { step: number }) {
 
   useEffect(() => {
     if (step !== 1) return;
+    let cycle = 0;
     const timer = setInterval(() => {
+      cycle++;
+      if (cycle >= 3) {
+        clearInterval(timer);
+        onAutoAdvance?.();
+        return;
+      }
       setHighlightIdx((prev) => {
         const next = (prev + 1) % HIGHLIGHT_GROUPS.length;
         setLeakage((l) => l + LEAKAGE_PER_CYCLE[next % LEAKAGE_PER_CYCLE.length]);
@@ -178,7 +194,7 @@ export function ProfitGrowthSlide({ step = 0 }: { step: number }) {
       });
     }, HIGHLIGHT_CYCLE_MS);
     return () => clearInterval(timer);
-  }, [step]);
+  }, [step, onAutoAdvance]);
 
   useEffect(() => {
     if (!showScan || showSweep) {
@@ -192,10 +208,21 @@ export function ProfitGrowthSlide({ step = 0 }: { step: number }) {
       if (cycle >= MODEL_SCAN_GROUPS.length) {
         cycle = 0;
       }
+      if (cycle === 7) {
+        clearInterval(timer);
+        onAutoAdvance?.();
+        return;
+      }
       setModelScanIdx(cycle);
     }, MODEL_SCAN_CYCLE_MS);
     return () => clearInterval(timer);
-  }, [showScan, showSweep]);
+  }, [showScan, showSweep, onAutoAdvance]);
+
+  useEffect(() => {
+    if (!announcing) return;
+    const timer = setTimeout(() => onAutoAdvance?.(), 2500);
+    return () => clearTimeout(timer);
+  }, [announcing, onAutoAdvance]);
 
   useEffect(() => {
     if (!showSweep) {
@@ -206,31 +233,43 @@ export function ProfitGrowthSlide({ step = 0 }: { step: number }) {
   }, [showSweep]);
 
   return (
-    <div className="mx-auto flex h-[calc(100vh-7.5rem)] max-w-6xl flex-col items-center justify-start px-6 pt-4">
-      {/* Header */}
+    <div className="mx-auto flex h-[calc(100vh-7.5rem)] max-w-6xl flex-col items-center justify-center px-6 pt-8">
       <motion.span
-        className="mb-1 inline-block rounded-full px-3 py-0.5 text-[10px] font-bold uppercase tracking-[0.2em]"
+        className="mb-1 inline-block rounded-full px-3 py-0.5 text-[10px] font-bold tracking-[0.2em] uppercase"
         style={{ backgroundColor: `${NAVY}10`, color: NAVY }}
         initial={{ opacity: 0, y: -8 }}
         animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
       >
         Profit Growth
       </motion.span>
       <motion.h2
         className="text-center text-2xl font-bold tracking-tight sm:text-3xl"
         style={{ color: NAVY }}
-        initial={{ opacity: 0, y: -8 }}
+        initial={{ opacity: 0, y: -12 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
+        transition={{ duration: 0.4, delay: 0.05 }}
       >
         Smarter pricing decisions for profit growth
       </motion.h2>
 
-      <div className="h-4" />
+      <div className="flex min-h-[3rem] items-center justify-center px-4">
+        <AnimatePresence mode="wait">
+          <motion.p
+            key={step}
+            className="max-w-2xl text-center text-[1.05rem] leading-relaxed"
+            style={{ color: NAVY }}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.3 }}
+          >
+            {STEP_NARRATIVES[step]}
+          </motion.p>
+        </AnimatePresence>
+      </div>
 
-      {/* Visual area */}
       <div className="relative w-full flex-1 min-h-0 overflow-hidden">
-        {/* Step 0: Narrative intro with big numbers */}
         <AnimatePresence>
           {step === 0 && (
             <motion.div
@@ -242,51 +281,25 @@ export function ProfitGrowthSlide({ step = 0 }: { step: number }) {
               transition={{ duration: 0.4 }}
             >
               <motion.p
-                className="text-lg sm:text-xl"
-                style={{ color: MUTED_NAVY }}
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1, duration: 0.5 }}
-              >
-                The model now manages
-              </motion.p>
-              <motion.p
                 className="text-3xl font-bold sm:text-4xl"
                 style={{ color: NAVY }}
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.25, duration: 0.5 }}
+                initial={{ opacity: 0, scale: 0.7 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.2, duration: 0.5, type: "spring", stiffness: 150, damping: 15 }}
               >
                 <span style={{ color: TEAL }}><AnimatedCounter target={14200} duration={2.5} /> prices</span>
                 {" "}×{" "}
                 <span style={{ color: ORANGE }}><AnimatedCounter target={2400} duration={2} /> accounts</span>
               </motion.p>
               <motion.p
-                className="mx-auto max-w-2xl text-center text-lg leading-relaxed sm:text-xl"
+                className="text-sm font-medium"
                 style={{ color: MUTED_NAVY }}
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.45, duration: 0.5 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.5, duration: 0.5 }}
               >
-                {"Let's see what that looks like — with vs. without the Dynamic Model."}
+                optimized continuously
               </motion.p>
-              <motion.div
-                className="flex items-center gap-2 mt-2"
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.7, duration: 0.5 }}
-              >
-                <span className="text-sm font-medium" style={{ color: TEAL }}>
-                  See the comparison
-                </span>
-                <motion.span
-                  style={{ color: TEAL }}
-                  animate={{ x: [0, 4, 0] }}
-                  transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut" }}
-                >
-                  →
-                </motion.span>
-              </motion.div>
             </motion.div>
           )}
         </AnimatePresence>
@@ -575,77 +588,56 @@ export function ProfitGrowthSlide({ step = 0 }: { step: number }) {
 
               </motion.div>
 
-              {/* Dramatic announcement overlay */}
+              {/* Announcement overlay — clean card style */}
               <AnimatePresence>
                 {announcing && (
                   <motion.div
                     key="announce-overlay"
-                    className="absolute inset-0 z-20 flex flex-col items-center justify-center rounded-xl"
-                    style={{ background: `linear-gradient(135deg, ${NAVY}f5 0%, #003050f0 100%)` }}
+                    className="absolute inset-0 z-20 flex flex-col items-center justify-center rounded-xl bg-white/95"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    exit={{ opacity: 0, transition: { duration: 0.5 } }}
+                    exit={{ opacity: 0, transition: { duration: 0.4 } }}
                     transition={{ duration: 0.4 }}
                   >
-                    {/* Radial pulse ring */}
-                    <motion.div
-                      className="absolute rounded-full"
-                      style={{ width: 300, height: 300, border: `2px solid ${GREEN}40` }}
-                      initial={{ opacity: 0, scale: 0.3 }}
-                      animate={{ opacity: [0, 0.6, 0], scale: [0.3, 1.6, 2.2] }}
-                      transition={{ duration: 2.4, ease: "easeOut" }}
-                    />
-                    <motion.div
-                      className="absolute rounded-full"
-                      style={{ width: 200, height: 200, border: `1.5px solid ${TEAL}30` }}
-                      initial={{ opacity: 0, scale: 0.4 }}
-                      animate={{ opacity: [0, 0.5, 0], scale: [0.4, 1.4, 2] }}
-                      transition={{ duration: 2.4, delay: 0.3, ease: "easeOut" }}
-                    />
-
-                    {/* "Now with insights" label */}
                     <motion.span
                       className="mb-3 text-xs font-bold uppercase tracking-[0.3em]"
-                      style={{ color: `${TEAL}cc` }}
+                      style={{ color: MUTED_NAVY }}
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.3, duration: 0.5 }}
+                      transition={{ delay: 0.2, duration: 0.4 }}
                     >
                       Now with Insights
                     </motion.span>
 
-                    {/* Main title — staggered word reveal */}
                     <div className="flex items-center gap-3">
                       {["Dynamic", "Pricing", "Model"].map((word, i) => (
                         <motion.span
                           key={word}
                           className="text-3xl font-extrabold tracking-tight sm:text-4xl"
-                          style={{ color: i === 0 ? GREEN : "white" }}
+                          style={{ color: i === 0 ? GREEN : NAVY }}
                           initial={{ opacity: 0, y: 20, filter: "blur(8px)" }}
                           animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                          transition={{ delay: 0.5 + i * 0.18, duration: 0.5, ease: "easeOut" }}
+                          transition={{ delay: 0.4 + i * 0.18, duration: 0.5, ease: "easeOut" }}
                         >
                           {word}
                         </motion.span>
                       ))}
                     </div>
 
-                    {/* Accent line */}
                     <motion.div
                       className="mt-4 h-[2px] rounded-full"
                       style={{ backgroundColor: GREEN }}
                       initial={{ width: 0, opacity: 0 }}
                       animate={{ width: 180, opacity: 1 }}
-                      transition={{ delay: 1.1, duration: 0.6, ease: "easeOut" }}
+                      transition={{ delay: 1, duration: 0.6, ease: "easeOut" }}
                     />
 
-                    {/* Subtext */}
                     <motion.p
                       className="mt-3 text-sm font-medium"
-                      style={{ color: `${TEAL}aa` }}
+                      style={{ color: MUTED_NAVY }}
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
-                      transition={{ delay: 1.5, duration: 0.5 }}
+                      transition={{ delay: 1.3, duration: 0.5 }}
                     >
                       Optimizing every price point simultaneously
                     </motion.p>

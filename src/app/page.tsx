@@ -278,7 +278,12 @@ export default function Home() {
               description="Design, power, execution, and refinement compound into measurable results: higher margins, better win rates, and consistent pricing."
             />
           )}
-          {config.kind === "profit-growth" && <ProfitGrowthSlide step={subStep} />}
+          {config.kind === "profit-growth" && (
+            <ProfitGrowthSlide
+              step={subStep}
+              onAutoAdvance={() => navigate(slide + 1)}
+            />
+          )}
           {config.kind === "closing-summary" && <ClosingSummarySlide />}
           {config.kind === "end" && <EndSlide onRestart={() => navigate(0)} />}
         </motion.div>
