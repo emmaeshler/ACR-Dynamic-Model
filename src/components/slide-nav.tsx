@@ -17,6 +17,7 @@ interface SlideNavProps {
   groups: NavGroup[];
   onNavigate: (index: number, subStep?: number) => void;
   presentationTitle?: string;
+  animationDone?: boolean;
 }
 
 export function TopBar({
@@ -24,7 +25,7 @@ export function TopBar({
   current,
   currentSubStep,
   onNavigate,
-  presentationTitle = "How the Model Works",
+  presentationTitle = "Inside Your Dynamic Model",
 }: SlideNavProps) {
   const [open, setOpen] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -156,7 +157,7 @@ export function TopBar({
                     onClick={() =>
                       handleNavigate(
                         group.slides[0].index,
-                        group.slides[0].subStep,
+                        group.slides[0].subStep ?? 0,
                       )
                     }
                     className={cn(
@@ -198,6 +199,7 @@ export function BottomBar({
   total,
   groups,
   onNavigate,
+  animationDone,
 }: SlideNavProps) {
   const currentGroup =
     groups.find((g) =>
@@ -223,7 +225,7 @@ export function BottomBar({
         </Button>
 
         {currentGroup && currentGroup.slides.length > 1 && (
-          <div className="flex items-center gap-1 overflow-x-auto px-2">
+          <div className="flex items-center gap-2">
             {currentGroup.slides.map((slide) => {
               const isActive =
                 slide.index === current &&
@@ -234,14 +236,13 @@ export function BottomBar({
                   key={`${slide.index}-${slide.subStep ?? ""}`}
                   onClick={() => onNavigate(slide.index, slide.subStep)}
                   className={cn(
-                    "whitespace-nowrap rounded-full px-3 py-1 text-xs font-medium transition-colors",
+                    "size-2 rounded-full transition-all",
                     isActive
-                      ? "bg-white text-[#06283D]"
-                      : "bg-white/15 text-white/70 hover:bg-white/25",
+                      ? "scale-125 bg-white"
+                      : "bg-white/30 hover:bg-white/50",
                   )}
-                >
-                  {slide.label}
-                </button>
+                  aria-label={slide.label}
+                />
               );
             })}
           </div>
@@ -252,10 +253,15 @@ export function BottomBar({
           size="sm"
           onClick={() => onNavigate(current + 1)}
           disabled={current === total - 1}
-          className="shrink-0 text-white/60 hover:bg-white/10 hover:text-white/90"
+          className={cn(
+            "shrink-0 transition-all duration-700",
+            animationDone
+              ? "bg-white/15 text-white shadow-[0_0_12px_rgba(255,255,255,0.25)]"
+              : "text-white/60 hover:bg-white/10 hover:text-white/90",
+          )}
         >
           Next
-          <ChevronRight className="size-4" />
+          <ChevronRight className={cn("size-4", animationDone && "animate-pulse")} />
         </Button>
       </div>
     </nav>

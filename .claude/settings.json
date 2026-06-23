@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(agent-browser find *)",
+      "Bash(md5 /Users/emmaeshler/ml-explainer/src/components/slides/power-slide.tsx)",
+      "Bash(md5 /Users/emmaeshler/ml-explainer/src/components/slides/one-model.tsx)",
+      "Bash(ps -p 89155 -o command=)",
+      "Bash(ps -p 32744 -o command=)",
+      "Bash(ps -p 17625 -o command=)",
+      "Bash(lsof -i -sTCP:LISTEN)",
+      "Bash(lsof -p 17625 -i -sTCP:LISTEN)",
+      "Bash(lsof -p 17625 -i TCP -sTCP:LISTEN)",
+      "Bash(ps -p 69722 -o command=)",
+      "Bash(ls -la /proc/17625/cwd 2>/dev/null || lsof -p 17625 2>/dev/null | grep cwd)",
+      "Read(//proc/17625/**)",
+      "Bash(curl -s http://localhost:3003)",
+      "Bash(curl -s http://localhost:3001)",
+      "Bash(curl -s http://localhost:3002)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3457)",
+      "Bash(ls -la /proc/69722/cwd 2>/dev/null || lsof -p 69722 2>/dev/null | grep cwd)",
+      "Read(//proc/69722/**)",
+      "Bash(curl -s http://localhost:3000 -L -o /dev/null -w \"%{url_effective} %{http_code}\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code} %{redirect_url}\" http://localhost:3000)"
+    ]
+  }
+}

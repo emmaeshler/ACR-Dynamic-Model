@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "How the Model Works | INSIGHT2PROFIT",
+  title: "Inside Your Dynamic Model | INSIGHT2PROFIT",
   description:
     "An interactive walkthrough of INSIGHT2PROFIT's ML pricing model — explore at your own depth.",
 };
