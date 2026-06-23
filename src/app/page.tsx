@@ -147,10 +147,52 @@ const AUTO_ANIM_SLIDES = new Set<SlideKind>([
 
 const DEFAULT_DONE_MS = 2000;
 
+async function collectStyles(): Promise<string> {
+  const css: string[] = [];
+  for (const sheet of document.styleSheets) {
+    try {
+      for (const rule of sheet.cssRules) css.push(rule.cssText);
+    } catch {
+      if (sheet.href) {
+        try {
+          const resp = await fetch(sheet.href);
+          css.push(await resp.text());
+        } catch { /* cross-origin, skip */ }
+      }
+    }
+  }
+  return css.join("\n");
+}
+
+const noop = () => {};
+
+function AllSlides() {
+  return (
+    <>
+      <IntroSlide />
+      <OverviewSlide step={OVERVIEW_TOTAL_STEPS - 1} />
+      <OneModelSlide step={ONE_MODEL_TOTAL_STEPS - 1} onAutoAdvance={noop} />
+      <ModuleIntroSlide number={2} label="Power" headline="How the model produces practical prices" description="ML analyzes millions of transactions to surface pricing signals. A generative AI layer translates those signals into clear, defensible recommendations." />
+      <PowerSlide step={POWER_TOTAL_STEPS - 1} />
+      <AiTechniquesSlide />
+      <ModuleIntroSlide number={3} label="Execute" headline="Layering in the client — where context meets the price" description="The model's recommendations meet the real world: customer relationships, business rules, and market position shape the final guidance for every deal." />
+      <ExecuteSlide step={EXECUTE_TOTAL_STEPS - 1} />
+      <ModuleIntroSlide number={4} label="Refine" headline="The model learns from every market response" description="Every deal won, lost, or overridden is a signal. The model absorbs these continuously, sharpening guidance with every transaction." />
+      <RefineSlide step={REFINE_TOTAL_STEPS - 1} />
+      <ModuleIntroSlide number={5} label="Profit Growth" headline="Where it all comes together — measurable business impact" description="Design, power, execution, and refinement compound into measurable results: higher margins, better win rates, and consistent pricing." />
+      <ProfitGrowthSlide step={PROFIT_GROWTH_TOTAL_STEPS - 1} onAutoAdvance={noop} />
+      <ClosingSummarySlide />
+      <EndSlide onRestart={noop} />
+    </>
+  );
+}
+
 export default function Home() {
   const [slide, setSlide] = useState(0);
   const [subStep, setSubStep] = useState(0);
   const [animationDone, setAnimationDone] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const exportRef = useRef<HTMLDivElement>(null);
   const total = SLIDES.length;
 
   const maxSteps = SUB_STEP_CONFIG[slide] ?? 0;
@@ -207,6 +249,45 @@ export default function Home() {
   );
 
   useEffect(() => {
+    if (!exporting || !exportRef.current) return;
+    const frame = requestAnimationFrame(async () => {
+      const styles = await collectStyles();
+      const container = exportRef.current!;
+      container.querySelectorAll("[style]").forEach((el) => {
+        const s = (el as HTMLElement).style;
+        if (s.opacity === "0") s.opacity = "1";
+        if (s.transform) s.transform = "none";
+      });
+      const content = container.innerHTML;
+      const html = `<!DOCTYPE html>
+<html lang="en" class="${document.documentElement.className}">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Inside Your Dynamic Model | INSIGHT2PROFIT</title>
+<style>
+${styles}
+* { animation-play-state: paused !important; }
+</style>
+</head>
+<body class="${document.body.className}" style="padding:0;margin:0">
+<main>${content}</main>
+</body>
+</html>`;
+      const blob = new Blob([html], { type: "text/html" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "presentation.html";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(a.href);
+      setExporting(false);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [exporting]);
+
+  useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (e.key === "ArrowRight" || e.key === "ArrowDown") {
         e.preventDefault();
@@ -234,7 +315,7 @@ export default function Home() {
           transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
           className="w-full"
         >
-          {config.kind === "intro" && <IntroSlide />}
+          {config.kind === "intro" && <IntroSlide onExport={() => setExporting(true)} />}
           {config.kind === "overview" && <OverviewSlide step={subStep} />}
           {config.kind === "one-model" && (
             <OneModelSlide
@@ -289,6 +370,11 @@ export default function Home() {
         </motion.div>
         </AnimatePresence>
       </main>
+      {exporting && (
+        <div ref={exportRef} className="fixed left-[-9999px] top-0 w-screen" aria-hidden>
+          <AllSlides />
+        </div>
+      )}
       <SlideNav
         current={slide}
         currentSubStep={hasSubSteps ? subStep : undefined}
@@ -421,62 +507,19 @@ function RotatingWord() {
   );
 }
 
-async function downloadAsHtml() {
-  const styles: string[] = [];
-  for (const sheet of document.styleSheets) {
-    try {
-      for (const rule of sheet.cssRules) {
-        styles.push(rule.cssText);
-      }
-    } catch {
-      if (sheet.href) {
-        try {
-          const resp = await fetch(sheet.href);
-          styles.push(await resp.text());
-        } catch { /* cross-origin stylesheet, skip */ }
-      }
-    }
-  }
-
-  const body = document.body.cloneNode(true) as HTMLElement;
-  body.querySelectorAll("nav, button, [data-slide-nav]").forEach((el) =>
-    el.remove(),
-  );
-
-  const html = `<!DOCTYPE html>
-<html lang="en" class="${document.documentElement.className}">
-<head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Inside Your Dynamic Model | INSIGHT2PROFIT</title>
-<style>
-${styles.join("\n")}
-</style>
-</head>
-${body.outerHTML}
-</html>`;
-
-  const blob = new Blob([html], { type: "text/html" });
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = "presentation.html";
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(a.href);
-}
-
-function IntroSlide() {
+function IntroSlide({ onExport }: { onExport?: () => void }) {
   return (
     <div className="relative flex min-h-[calc(100vh-4rem)] flex-col items-center justify-center overflow-hidden px-6 text-center">
       <IntroBackdrop />
 
-      <button
-        onClick={downloadAsHtml}
-        className="absolute right-6 top-6 z-20 rounded-lg bg-white/10 px-4 py-2 text-sm font-medium text-white backdrop-blur-sm transition-colors hover:bg-white/20"
-      >
-        Download as HTML
-      </button>
+      {onExport && (
+        <button
+          onClick={onExport}
+          className="absolute right-6 top-6 z-20 rounded-lg bg-white/10 px-4 py-2 text-sm font-medium text-white backdrop-blur-sm transition-colors hover:bg-white/20"
+        >
+          Download as HTML
+        </button>
+      )}
 
       <div className="relative z-10 mx-auto max-w-3xl">
         <div className="mb-8 flex items-center justify-center gap-3">
