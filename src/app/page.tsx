@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { type NavGroup, SlideNav } from "@/components/slide-nav";
 import { OverviewSlide, OVERVIEW_TOTAL_STEPS } from "@/components/slides/overview-slide";
@@ -421,10 +421,62 @@ function RotatingWord() {
   );
 }
 
+async function downloadAsHtml() {
+  const styles: string[] = [];
+  for (const sheet of document.styleSheets) {
+    try {
+      for (const rule of sheet.cssRules) {
+        styles.push(rule.cssText);
+      }
+    } catch {
+      if (sheet.href) {
+        try {
+          const resp = await fetch(sheet.href);
+          styles.push(await resp.text());
+        } catch { /* cross-origin stylesheet, skip */ }
+      }
+    }
+  }
+
+  const body = document.body.cloneNode(true) as HTMLElement;
+  body.querySelectorAll("nav, button, [data-slide-nav]").forEach((el) =>
+    el.remove(),
+  );
+
+  const html = `<!DOCTYPE html>
+<html lang="en" class="${document.documentElement.className}">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Inside Your Dynamic Model | INSIGHT2PROFIT</title>
+<style>
+${styles.join("\n")}
+</style>
+</head>
+${body.outerHTML}
+</html>`;
+
+  const blob = new Blob([html], { type: "text/html" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "presentation.html";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(a.href);
+}
+
 function IntroSlide() {
   return (
     <div className="relative flex min-h-[calc(100vh-4rem)] flex-col items-center justify-center overflow-hidden px-6 text-center">
       <IntroBackdrop />
+
+      <button
+        onClick={downloadAsHtml}
+        className="absolute right-6 top-6 z-20 rounded-lg bg-white/10 px-4 py-2 text-sm font-medium text-white backdrop-blur-sm transition-colors hover:bg-white/20"
+      >
+        Download as HTML
+      </button>
 
       <div className="relative z-10 mx-auto max-w-3xl">
         <div className="mb-8 flex items-center justify-center gap-3">
