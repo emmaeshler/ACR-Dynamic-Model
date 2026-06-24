@@ -245,6 +245,25 @@ export default function Home() {
   );
 }
 
+/* ── Download Button (client-only) ───────────────────────────── */
+
+function DownloadButton() {
+  const [show, setShow] = useState(false);
+  useEffect(() => {
+    setShow(!document.getElementById("__export_root"));
+  }, []);
+  if (!show) return null;
+  return (
+    <a
+      href="/Inside Your Dynamic Model - INSIGHT2PROFIT.html"
+      download="Inside Your Dynamic Model - INSIGHT2PROFIT.html"
+      className="absolute right-6 top-6 z-20 rounded-lg bg-white/10 px-4 py-2 text-sm font-medium text-white backdrop-blur-sm transition-colors hover:bg-white/20"
+    >
+      Download as HTML
+    </a>
+  );
+}
+
 /* ── Intro Slide ──────────────────────────────────────────────── */
 
 function I2PLogoMark({ className }: { className?: string }) {
@@ -370,15 +389,7 @@ function IntroSlide() {
     <div className="relative flex min-h-[calc(100vh-4rem)] flex-col items-center justify-center overflow-hidden px-6 text-center">
       <IntroBackdrop />
 
-      {typeof window !== "undefined" && !document.getElementById("__export_root") && (
-        <a
-          href="/Inside Your Dynamic Model - INSIGHT2PROFIT.html"
-          download="Inside Your Dynamic Model - INSIGHT2PROFIT.html"
-          className="absolute right-6 top-6 z-20 rounded-lg bg-white/10 px-4 py-2 text-sm font-medium text-white backdrop-blur-sm transition-colors hover:bg-white/20"
-        >
-          Download as HTML
-        </a>
-      )}
+      <DownloadButton />
 
       <div className="relative z-10 mx-auto max-w-3xl">
         <div className="mb-8 flex items-center justify-center gap-3">
