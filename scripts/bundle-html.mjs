@@ -128,4 +128,5 @@ console.log(`\nWrote ${DEST} (${sizeMB} MB)`);
 
 // ── Step 5: Clean up ──
 rmSync(OUT, { recursive: true, force: true });
-console.log("Cleaned up out/ directory");
+rmSync(join(ROOT, ".next"), { recursive: true, force: true });
+console.log("Cleaned up out/ and .next/ directories");
