@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const ADMIN_URL = process.env.AUTH_ADMIN_URL!;
-const API_KEY = process.env.AUTH_API_KEY!;
 const COOKIE_NAME = "acr_session";
 
 export async function POST(req: NextRequest) {
@@ -17,11 +15,19 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const verifyRes = await fetch(`${ADMIN_URL}/api/auth/verify`, {
+  const adminUrl = process.env.AUTH_ADMIN_URL;
+  const apiKey = process.env.AUTH_API_KEY;
+
+  if (!adminUrl || !apiKey) {
+    console.error("Missing AUTH_ADMIN_URL or AUTH_API_KEY env vars");
+    return NextResponse.json({ error: "Auth service not configured" }, { status: 500 });
+  }
+
+  const verifyRes = await fetch(`${adminUrl}/api/auth/verify`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "x-api-key": API_KEY,
+      "x-api-key": apiKey,
       "x-app-name": "acr-dynamic-model",
     },
     body: JSON.stringify({ username, password, demo: "acr-model" }),
