@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
 const ADMIN_URL = process.env.AUTH_ADMIN_URL!;
-const API_KEY = process.env.AUTH_API_KEY!;
 const COOKIE_NAME = "acr_session";
 
 export async function POST(req: NextRequest) {
@@ -17,37 +16,54 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const verifyRes = await fetch(`${ADMIN_URL}/api/auth/verify`, {
+  const loginRes = await fetch(`${ADMIN_URL}/api/login`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-api-key": API_KEY,
-      "x-app-name": "acr-dynamic-model",
-    },
-    body: JSON.stringify({ username, password, demo: "acr-model" }),
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email: username, password }),
   });
 
-  if (!verifyRes.ok) {
-    return NextResponse.json({ error: "Auth service error" }, { status: 502 });
+  if (!loginRes.ok) {
+    const data = await loginRes.json().catch(() => null);
+    const status = loginRes.status === 401 ? 401 : 502;
+    return NextResponse.json(
+      { error: data?.error || "Invalid credentials" },
+      { status }
+    );
   }
 
-  const data = await verifyRes.json();
+  const data = await loginRes.json();
+  const session = data.session;
 
-  if (!data.authorized || !data.hasAccess) {
+  if (!session) {
     return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
   }
 
+  const demos = session.allowedDemos;
+  const hasAccess =
+    demos === "all" || (Array.isArray(demos) && demos.includes("acr-model"));
+
+  if (!hasAccess) {
+    return NextResponse.json(
+      { error: "You do not have access to this demo" },
+      { status: 403 }
+    );
+  }
+
   const response = NextResponse.json({ ok: true });
-  response.cookies.set(COOKIE_NAME, JSON.stringify({
-    user: data.user.email,
-    name: [data.user.firstName, data.user.lastName].filter(Boolean).join(" "),
-  }), {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-    maxAge: 60 * 60 * 24 * 7,
-  });
+  response.cookies.set(
+    COOKIE_NAME,
+    JSON.stringify({
+      user: session.email,
+      name: session.displayName || session.email,
+    }),
+    {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge: 60 * 60 * 24 * 7,
+    }
+  );
 
   return response;
 }
