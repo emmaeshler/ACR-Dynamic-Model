@@ -69,15 +69,15 @@ export default function LoginPage() {
 
         <form onSubmit={handleSubmit} className="text-left">
           <label className="mb-1 block text-sm font-medium text-[#555]">
-            Email
+            Username or Email
           </label>
           <input
             name="username"
-            type="email"
+            type="text"
             required
             autoFocus
-            autoComplete="email"
-            placeholder="Enter your email"
+            autoComplete="username"
+            placeholder="Enter your username or email"
             className="mb-4 w-full rounded-lg border border-[#d0d0d0] px-3 py-2.5 text-sm text-[#1a1a2e] outline-none transition-colors placeholder:text-[#aaa] focus:border-[#00446a] focus:ring-1 focus:ring-[#00446a]"
           />
 
