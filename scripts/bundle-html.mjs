@@ -5,7 +5,7 @@ import { build } from "esbuild";
 
 const ROOT = resolve(import.meta.dirname, "..");
 const OUT = join(ROOT, "out");
-const DEST = join(ROOT, "public", "presentation.html");
+const DEST = join(ROOT, "public", "Inside Your Dynamic Model - INSIGHT2PROFIT.html");
 
 // ── Step 1: Bundle JS with esbuild (React + Framer Motion + all components) ──
 console.log("Bundling JS with esbuild...");
