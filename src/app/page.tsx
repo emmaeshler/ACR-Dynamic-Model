@@ -6,7 +6,6 @@ import { type NavGroup, SlideNav } from "@/components/slide-nav";
 import { OverviewSlide, OVERVIEW_TOTAL_STEPS } from "@/components/slides/overview-slide";
 import { OneModelSlide, ONE_MODEL_TOTAL_STEPS } from "@/components/slides/one-model";
 import { PowerSlide, POWER_TOTAL_STEPS } from "@/components/slides/power-slide";
-import { AiTechniquesSlide } from "@/components/slides/ai-techniques";
 import { ExecuteSlide, EXECUTE_TOTAL_STEPS } from "@/components/slides/execute-slide";
 import { RefineSlide, REFINE_TOTAL_STEPS } from "@/components/slides/refine-slide";
 import { ProfitGrowthSlide, PROFIT_GROWTH_TOTAL_STEPS } from "@/components/slides/profit-growth-slide";
@@ -19,7 +18,6 @@ type SlideKind =
   | "one-model"
   | "module-intro-power"
   | "power"
-  | "ai-techniques"
   | "module-intro-execute"
   | "execute"
   | "module-intro-refine"
@@ -42,7 +40,6 @@ const SLIDES: SlideConfig[] = [
   // Section 2: Power
   { kind: "module-intro-power" },
   { kind: "power" },
-  { kind: "ai-techniques" },
   // Section 3: Execute
   { kind: "module-intro-execute" },
   { kind: "execute" },
@@ -59,9 +56,9 @@ const SLIDES: SlideConfig[] = [
 const OVERVIEW_INDEX = 1;
 const ONE_MODEL_INDEX = 2;
 const POWER_INDEX = 4;
-const EXECUTE_INDEX = 7;
-const REFINE_INDEX = 9;
-const PROFIT_GROWTH_INDEX = 11;
+const EXECUTE_INDEX = 6;
+const REFINE_INDEX = 8;
+const PROFIT_GROWTH_INDEX = 10;
 
 const SUB_STEP_CONFIG: Record<number, number> = {
   [OVERVIEW_INDEX]: OVERVIEW_TOTAL_STEPS,
@@ -95,13 +92,12 @@ const NAV_GROUPS: NavGroup[] = [
       { index: POWER_INDEX, label: "Overview", subStep: 0 },
       { index: POWER_INDEX, label: "Data Ingestion", subStep: 1 },
       { index: POWER_INDEX, label: "Analysis", subStep: 2 },
-      { index: 5, label: "ML vs Gen AI" },
     ],
   },
   {
     label: "3 | Execute",
     slides: [
-      { index: 6, label: "What & Why" },
+      { index: 5, label: "What & Why" },
       { index: EXECUTE_INDEX, label: "The Product", subStep: 0 },
       { index: EXECUTE_INDEX, label: "Customer Pricing", subStep: 1 },
     ],
@@ -109,7 +105,7 @@ const NAV_GROUPS: NavGroup[] = [
   {
     label: "4 | Refine",
     slides: [
-      { index: 8, label: "What & Why" },
+      { index: 7, label: "What & Why" },
       { index: REFINE_INDEX, label: "Prices in Market", subStep: 0 },
       { index: REFINE_INDEX, label: "Market Responds", subStep: 1 },
       { index: REFINE_INDEX, label: "Segmentation", subStep: 2 },
@@ -121,7 +117,7 @@ const NAV_GROUPS: NavGroup[] = [
   {
     label: "5 | Profit Growth",
     slides: [
-      { index: 10, label: "What & Why" },
+      { index: 9, label: "What & Why" },
       { index: PROFIT_GROWTH_INDEX, label: "The Scale", subStep: 0 },
       { index: PROFIT_GROWTH_INDEX, label: "Status Quo", subStep: 1 },
       { index: PROFIT_GROWTH_INDEX, label: "Dynamic Model", subStep: 2 },
@@ -132,8 +128,8 @@ const NAV_GROUPS: NavGroup[] = [
   {
     label: "Closing",
     slides: [
-      { index: 12, label: "Summary" },
-      { index: 13, label: "Thank You" },
+      { index: 11, label: "Summary" },
+      { index: 12, label: "Thank You" },
     ],
   },
 ];
@@ -251,7 +247,6 @@ export default function Home() {
             />
           )}
           {config.kind === "power" && <PowerSlide step={subStep} />}
-          {config.kind === "ai-techniques" && <AiTechniquesSlide />}
           {config.kind === "module-intro-execute" && (
             <ModuleIntroSlide
               number={3}

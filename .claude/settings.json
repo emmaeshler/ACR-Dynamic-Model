@@ -1,4 +1,17 @@
 {
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if echo \"$CLAUDE_TOOL_INPUT\" | grep -q '\"file_path\".*\"/Users/emmaeshler/ml-explainer/src/'; then cd /Users/emmaeshler/ml-explainer && npm run build:html 2>&1 | tail -3; fi"
+          }
+        ]
+      }
+    ]
+  },
   "permissions": {
     "allow": [
       "Bash(agent-browser find *)",
