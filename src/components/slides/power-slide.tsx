@@ -12,7 +12,7 @@ const MUTED = "#5A6A78";
 const CARD_BG = "#F5F8FA";
 const CARD_BORDER = "#CBD5DE";
 
-export const POWER_TOTAL_STEPS = 3;
+export const POWER_TOTAL_STEPS = 2;
 
 /* ─── Narrative text per step ─── */
 
@@ -484,10 +484,8 @@ function FlowArrow({ active }: { active: boolean }) {
 
 export function PowerSlide({ step = 0 }: { step: number }) {
   const showInputs = step >= 1;
-  const showAnalysis = step >= 2;
-  const [digestView, setDigestView] = useState<"ai" | "raw">("raw");
 
-  const narrativeKey = step < 2 ? String(step) : `2-${digestView}`;
+  const narrativeKey = String(step);
 
   return (
     <div className="mx-auto flex h-[calc(100vh-7.5rem)] max-w-6xl flex-col items-center justify-start px-6 pt-4">
@@ -589,7 +587,7 @@ export function PowerSlide({ step = 0 }: { step: number }) {
 
         {/* Step 1: Input data ingestion */}
         <AnimatePresence>
-          {showInputs && !showAnalysis && (
+          {showInputs && (
             <motion.div
               key="data-ingest"
               className="absolute inset-0 flex items-start justify-center pt-0"
@@ -610,22 +608,6 @@ export function PowerSlide({ step = 0 }: { step: number }) {
                 </motion.div>
                 <TimelineInputs show={showInputs} />
               </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Step 2: Digest transition — inputs converge, noise reduces to signal */}
-        <AnimatePresence>
-          {showAnalysis && (
-            <motion.div
-              key="digest"
-              className="absolute inset-0 flex items-center justify-center"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0, transition: { duration: 0.3 } }}
-              transition={{ duration: 0.3 }}
-            >
-              <DigestTransition active={showAnalysis} view={digestView} onViewChange={setDigestView} />
             </motion.div>
           )}
         </AnimatePresence>

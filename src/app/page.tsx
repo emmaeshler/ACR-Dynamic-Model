@@ -81,7 +81,6 @@ const NAV_GROUPS: NavGroup[] = [
     slides: [
       { index: POWER_INDEX, label: "Overview", subStep: 0 },
       { index: POWER_INDEX, label: "Data Ingestion", subStep: 1 },
-      { index: POWER_INDEX, label: "Analysis", subStep: 2 },
     ],
   },
   {
