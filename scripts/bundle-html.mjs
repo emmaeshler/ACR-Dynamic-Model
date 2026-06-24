@@ -50,7 +50,18 @@ execSync("npx next build", {
 });
 
 // ── Step 3: Collect and inline CSS with fonts ──
+if (!existsSync(join(OUT, "index.html"))) {
+  console.error("ERROR: out/index.html not found. Static export may have failed.");
+  process.exit(1);
+}
 const indexHtml = readFileSync(join(OUT, "index.html"), "utf-8");
+
+// Debug: show what CSS links exist in the static export
+const debugLinks = indexHtml.match(/<link[^>]*>/g) || [];
+console.log("  Links found in index.html:", debugLinks.length);
+debugLinks.forEach(l => console.log("    ", l));
+const debugStyles = indexHtml.match(/<style[^>]*>[\s\S]*?<\/style>/g) || [];
+console.log("  Style blocks found:", debugStyles.length);
 
 function inlineFontUrl(match, rawUrl, cssFileDir) {
   const url = rawUrl.replace(/["']/g, "");
