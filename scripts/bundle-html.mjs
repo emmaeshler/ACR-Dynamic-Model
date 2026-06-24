@@ -1,5 +1,5 @@
 import { execSync } from "node:child_process";
-import { readFileSync, writeFileSync, rmSync, existsSync } from "node:fs";
+import { readFileSync, writeFileSync, rmSync, existsSync, readdirSync, statSync } from "node:fs";
 import { join, resolve, dirname } from "node:path";
 import { build } from "esbuild";
 
@@ -49,19 +49,22 @@ execSync("npx next build", {
   env: { ...process.env, STATIC_EXPORT: "1" },
 });
 
-// ── Step 3: Collect and inline CSS with fonts ──
-if (!existsSync(join(OUT, "index.html"))) {
-  console.error("ERROR: out/index.html not found. Static export may have failed.");
-  process.exit(1);
-}
-const indexHtml = readFileSync(join(OUT, "index.html"), "utf-8");
+// ── Step 3: Collect CSS + fonts by scanning the filesystem ──
+// (Vercel's modifyConfig can strip <link> tags from index.html, so we find files directly)
 
-// Debug: show what CSS links exist in the static export
-const debugLinks = indexHtml.match(/<link[^>]*>/g) || [];
-console.log("  Links found in index.html:", debugLinks.length);
-debugLinks.forEach(l => console.log("    ", l));
-const debugStyles = indexHtml.match(/<style[^>]*>[\s\S]*?<\/style>/g) || [];
-console.log("  Style blocks found:", debugStyles.length);
+function findFiles(dir, ext) {
+  const results = [];
+  if (!existsSync(dir)) return results;
+  for (const entry of readdirSync(dir)) {
+    const full = join(dir, entry);
+    if (statSync(full).isDirectory()) {
+      results.push(...findFiles(full, ext));
+    } else if (entry.endsWith(ext)) {
+      results.push(full);
+    }
+  }
+  return results;
+}
 
 function inlineFontUrl(match, rawUrl, cssFileDir) {
   const url = rawUrl.replace(/["']/g, "");
@@ -78,43 +81,38 @@ function inlineFontUrl(match, rawUrl, cssFileDir) {
   return `url(data:${mime};base64,${b64})`;
 }
 
-// Extract CSS from link tags
+// Find all CSS files in the static export output
+const cssFiles = findFiles(OUT, ".css");
+console.log(`  Found ${cssFiles.length} CSS file(s):`);
+cssFiles.forEach(f => console.log("    ", f));
+
 const cssBlocks = [];
-const cssLinkRe = /<link\s+rel="stylesheet"\s+href="([^"]+)"[^>]*\/?>/g;
-let m;
-while ((m = cssLinkRe.exec(indexHtml)) !== null) {
-  const filePath = join(OUT, m[1]);
-  if (!existsSync(filePath)) continue;
+for (const filePath of cssFiles) {
   const cssDir = dirname(filePath);
   let css = readFileSync(filePath, "utf-8");
   css = css.replace(/url\(([^)]+)\)/g, (mt, u) => inlineFontUrl(mt, u, cssDir));
   cssBlocks.push(css);
 }
 
-// Extract inline styles from the HTML head (font-face declarations)
+// Also inline font-face declarations from index.html <style> blocks if present
+const indexHtml = existsSync(join(OUT, "index.html"))
+  ? readFileSync(join(OUT, "index.html"), "utf-8")
+  : "";
 const inlineStyleRe = /<style[^>]*>([\s\S]*?)<\/style>/g;
+let m;
 while ((m = inlineStyleRe.exec(indexHtml)) !== null) {
   const mediaDir = join(OUT, "_next", "static", "media");
   let css = m[1];
-  css = css.replace(/url\(([^)]+)\)/g, (mt, u) => inlineFontUrl(mt, u, mediaDir));
-  cssBlocks.push(css);
-}
-
-// Also resolve preloaded font files
-const preloadFontRe = /<link\s+rel="preload"\s+href="([^"]+)"\s+as="font"[^>]*\/?>/g;
-while ((m = preloadFontRe.exec(indexHtml)) !== null) {
-  const fontPath = join(OUT, m[1]);
-  if (!existsSync(fontPath)) continue;
-  const ext = m[1].split(".").pop();
-  const mime = ext === "woff2" ? "font/woff2" : ext === "woff" ? "font/woff" : "font/ttf";
-  const b64 = readFileSync(fontPath).toString("base64");
-  cssBlocks.push(`@font-face { src: url(data:${mime};base64,${b64}); }`);
+  if (css.trim()) {
+    css = css.replace(/url\(([^)]+)\)/g, (mt, u) => inlineFontUrl(mt, u, mediaDir));
+    cssBlocks.push(css);
+  }
 }
 
 const allCss = cssBlocks.join("\n");
-console.log(`  CSS: ${(allCss.length / 1024).toFixed(0)} KB`);
+console.log(`  CSS total: ${(allCss.length / 1024).toFixed(0)} KB`);
 
-// Extract html class (font variable classes)
+// Extract html class from index.html (font variable classes)
 const htmlClassMatch = indexHtml.match(/<html[^>]*class="([^"]*)"/);
 const htmlClass = htmlClassMatch ? htmlClassMatch[1] : "";
 
