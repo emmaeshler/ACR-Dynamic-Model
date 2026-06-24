@@ -9,7 +9,7 @@ const TEAL = "#21A5D5";
 const PURPLE = "#7B5EA7";
 const GREY = "#B8BFC6";
 
-export const EXECUTE_TOTAL_STEPS = 2;
+export const EXECUTE_TOTAL_STEPS = 1;
 
 /* ── Layout ──────────────────────────────────────────── */
 
@@ -270,100 +270,6 @@ function ResultCard({ cust }: { cust: CustomerScenario }) {
   );
 }
 
-/* ── Hero product display (step 0) ───────────────────── */
-
-function ProductHero() {
-  const cx = SVG_W / 2;
-  const cy = SVG_H / 2 - 20;
-
-  const EXIT_EASE: [number, number, number, number] = [0.65, 0, 0.35, 1];
-
-  return (
-    <motion.g>
-      {/* Card background — contracts toward model box on exit */}
-      <motion.rect
-        x={cx - 180} y={cy - 80} width={360} height={160}
-        rx={20} fill="white" stroke={NAVY} strokeWidth={2}
-        variants={{
-          initial: { opacity: 0, scale: 0.9 },
-          animate: { opacity: 1, scale: 1, transition: { duration: 0.5, ease: "easeOut" } },
-          exit: { opacity: 0, scale: 0.45, y: MODEL_CY - cy, transition: { duration: 0.55, ease: EXIT_EASE } },
-        }}
-        initial="initial"
-        animate="animate"
-        exit="exit"
-        style={{ transformOrigin: `${cx}px ${cy}px` }}
-      />
-
-      {/* Product name — fades quickly on exit */}
-      <motion.g
-        variants={{
-          initial: { opacity: 0, y: -10 },
-          animate: { opacity: 1, y: 0, transition: { delay: 0.2, duration: 0.4 } },
-          exit: { opacity: 0, transition: { duration: 0.15 } },
-        }}
-        initial="initial"
-        animate="animate"
-        exit="exit"
-      >
-        <rect x={cx - 90} y={cy - 72} width={180} height={22} rx={11} fill={`${NAVY}0D`} />
-        <text x={cx} y={cy - 57} fontSize="10" fontWeight="600" fill={NAVY} textAnchor="middle" letterSpacing="0.08em">
-          {PRODUCT_NAME}
-        </text>
-      </motion.g>
-
-      {/* Price — flies up to model center and shrinks on exit */}
-      <motion.text
-        x={cx} y={cy + 10} fontSize="52" fontWeight="800" fill={NAVY} textAnchor="middle"
-        variants={{
-          initial: { opacity: 0, scale: 0.7 },
-          animate: { opacity: 1, scale: 1, transition: { delay: 0.4, duration: 0.5, type: "spring", stiffness: 150, damping: 15 } },
-          exit: {
-            y: MODEL_CY - (cy + 10),
-            scale: 0.18,
-            opacity: 0,
-            transition: { duration: 0.65, ease: EXIT_EASE },
-          },
-        }}
-        initial="initial"
-        animate="animate"
-        exit="exit"
-        style={{ transformOrigin: `${cx}px ${cy + 10}px` }}
-      >
-        {LIST_PRICE}
-      </motion.text>
-
-      <motion.text
-        x={cx} y={cy + 32} fontSize="13" fontWeight="500" fill={GREY} textAnchor="middle"
-        variants={{
-          initial: { opacity: 0 },
-          animate: { opacity: 1, transition: { delay: 0.7 } },
-          exit: { opacity: 0, transition: { duration: 0.12 } },
-        }}
-        initial="initial"
-        animate="animate"
-        exit="exit"
-      >
-        current list price
-      </motion.text>
-
-      <motion.text
-        x={cx} y={cy + 52} fontSize="11" fill={GREY} textAnchor="middle"
-        variants={{
-          initial: { opacity: 0 },
-          animate: { opacity: 1, transition: { delay: 0.8 } },
-          exit: { opacity: 0, transition: { duration: 0.12 } },
-        }}
-        initial="initial"
-        animate="animate"
-        exit="exit"
-      >
-        per unit
-      </motion.text>
-    </motion.g>
-  );
-}
-
 /* ── Main slide ──────────────────────────────────────── */
 
 export function ExecuteSlide({
@@ -374,7 +280,6 @@ export function ExecuteSlide({
 }) {
   const [selected, setSelected] = useState(0);
   const cust = CUSTOMERS[selected];
-  const isHero = step === 0;
 
   const inCurvePath = () => {
     const sy = MODEL_CY;
@@ -424,31 +329,17 @@ export function ExecuteSlide({
       {/* Narrative area */}
       <div className="flex min-h-[3rem] items-center justify-center px-4 mb-4">
         <AnimatePresence mode="wait">
-          {isHero ? (
-            <motion.p
-              key="hero-narrative"
-              className="max-w-2xl text-center text-[1.05rem] leading-relaxed"
-              style={{ color: NAVY }}
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -6 }}
-              transition={{ duration: 0.3 }}
-            >
-              You&apos;ve seen the model generate a recommended price for a product.<br />But the <span style={{ fontWeight: 700, color: PURPLE }}>right price also depends on who&apos;s buying</span>.
-            </motion.p>
-          ) : (
-            <motion.p
-              key={`cust-${selected}`}
-              className="max-w-2xl text-center text-[1.05rem] leading-relaxed"
-              style={{ color: NAVY }}
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -6 }}
-              transition={{ duration: 0.3 }}
-            >
-              {cust.narrative}
-            </motion.p>
-          )}
+          <motion.p
+            key={`cust-${selected}`}
+            className="max-w-2xl text-center text-[1.05rem] leading-relaxed"
+            style={{ color: NAVY }}
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.3 }}
+          >
+            {cust.narrative}
+          </motion.p>
         </AnimatePresence>
       </div>
 
@@ -456,12 +347,7 @@ export function ExecuteSlide({
       <div className="relative w-full max-w-5xl flex-1 min-h-0 overflow-hidden">
         <svg viewBox={`0 0 ${SVG_W} ${SVG_H}`} className="w-full h-full">
 
-          <AnimatePresence mode="wait">
-            {isHero ? (
-              <ProductHero key="hero" />
-            ) : (
               <motion.g
-                key="interactive"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.5, delay: 0.15 }}
@@ -637,8 +523,6 @@ export function ExecuteSlide({
                   );
                 })}
               </motion.g>
-            )}
-          </AnimatePresence>
 
         </svg>
       </div>

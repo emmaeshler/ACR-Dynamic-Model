@@ -9,20 +9,15 @@ import { PowerSlide, POWER_TOTAL_STEPS } from "@/components/slides/power-slide";
 import { ExecuteSlide, EXECUTE_TOTAL_STEPS } from "@/components/slides/execute-slide";
 import { RefineSlide, REFINE_TOTAL_STEPS } from "@/components/slides/refine-slide";
 import { ProfitGrowthSlide, PROFIT_GROWTH_TOTAL_STEPS } from "@/components/slides/profit-growth-slide";
-import { ModuleIntroSlide } from "@/components/slides/module-intro";
 import { ClosingSummarySlide } from "@/components/slides/closing-summary";
 
 type SlideKind =
   | "intro"
   | "overview"
   | "one-model"
-  | "module-intro-power"
   | "power"
-  | "module-intro-execute"
   | "execute"
-  | "module-intro-refine"
   | "refine"
-  | "module-intro-profit"
   | "profit-growth"
   | "closing-summary"
   | "end";
@@ -38,16 +33,12 @@ const SLIDES: SlideConfig[] = [
   // Section 1: Design
   { kind: "one-model" },
   // Section 2: Power
-  { kind: "module-intro-power" },
   { kind: "power" },
   // Section 3: Execute
-  { kind: "module-intro-execute" },
   { kind: "execute" },
   // Section 4: Refine
-  { kind: "module-intro-refine" },
   { kind: "refine" },
   // Section 5: Profit Growth
-  { kind: "module-intro-profit" },
   { kind: "profit-growth" },
   { kind: "closing-summary" },
   { kind: "end" },
@@ -55,10 +46,10 @@ const SLIDES: SlideConfig[] = [
 
 const OVERVIEW_INDEX = 1;
 const ONE_MODEL_INDEX = 2;
-const POWER_INDEX = 4;
-const EXECUTE_INDEX = 6;
-const REFINE_INDEX = 8;
-const PROFIT_GROWTH_INDEX = 10;
+const POWER_INDEX = 3;
+const EXECUTE_INDEX = 4;
+const REFINE_INDEX = 5;
+const PROFIT_GROWTH_INDEX = 6;
 
 const SUB_STEP_CONFIG: Record<number, number> = {
   [OVERVIEW_INDEX]: OVERVIEW_TOTAL_STEPS,
@@ -88,7 +79,6 @@ const NAV_GROUPS: NavGroup[] = [
   {
     label: "2 | Power",
     slides: [
-      { index: 3, label: "What & Why" },
       { index: POWER_INDEX, label: "Overview", subStep: 0 },
       { index: POWER_INDEX, label: "Data Ingestion", subStep: 1 },
       { index: POWER_INDEX, label: "Analysis", subStep: 2 },
@@ -97,15 +87,12 @@ const NAV_GROUPS: NavGroup[] = [
   {
     label: "3 | Execute",
     slides: [
-      { index: 5, label: "What & Why" },
-      { index: EXECUTE_INDEX, label: "The Product", subStep: 0 },
-      { index: EXECUTE_INDEX, label: "Customer Pricing", subStep: 1 },
+      { index: EXECUTE_INDEX, label: "Customer Pricing", subStep: 0 },
     ],
   },
   {
     label: "4 | Refine",
     slides: [
-      { index: 7, label: "What & Why" },
       { index: REFINE_INDEX, label: "Prices in Market", subStep: 0 },
       { index: REFINE_INDEX, label: "Market Responds", subStep: 1 },
       { index: REFINE_INDEX, label: "Segmentation", subStep: 2 },
@@ -117,7 +104,6 @@ const NAV_GROUPS: NavGroup[] = [
   {
     label: "5 | Profit Growth",
     slides: [
-      { index: 9, label: "What & Why" },
       { index: PROFIT_GROWTH_INDEX, label: "The Scale", subStep: 0 },
       { index: PROFIT_GROWTH_INDEX, label: "Status Quo", subStep: 1 },
       { index: PROFIT_GROWTH_INDEX, label: "Dynamic Model", subStep: 2 },
@@ -128,18 +114,13 @@ const NAV_GROUPS: NavGroup[] = [
   {
     label: "Closing",
     slides: [
-      { index: 11, label: "Summary" },
-      { index: 12, label: "Thank You" },
+      { index: 7, label: "Summary" },
+      { index: 8, label: "Thank You" },
     ],
   },
 ];
 
-const AUTO_ANIM_SLIDES = new Set<SlideKind>([
-  "module-intro-power",
-  "module-intro-execute",
-  "module-intro-refine",
-  "module-intro-profit",
-]);
+const AUTO_ANIM_SLIDES = new Set<SlideKind>([]);
 
 const DEFAULT_DONE_MS = 2000;
 
@@ -238,41 +219,9 @@ export default function Home() {
               onAutoAdvance={() => navigate(slide + 1)}
             />
           )}
-          {config.kind === "module-intro-power" && (
-            <ModuleIntroSlide
-              number={2}
-              label="Power"
-              headline="How the model produces practical prices"
-              description="ML analyzes millions of transactions to surface pricing signals. A generative AI layer translates those signals into clear, defensible recommendations."
-            />
-          )}
           {config.kind === "power" && <PowerSlide step={subStep} />}
-          {config.kind === "module-intro-execute" && (
-            <ModuleIntroSlide
-              number={3}
-              label="Execute"
-              headline="Layering in the client — where context meets the price"
-              description="The model's recommendations meet the real world: customer relationships, business rules, and market position shape the final guidance for every deal."
-            />
-          )}
           {config.kind === "execute" && <ExecuteSlide step={subStep} />}
-          {config.kind === "module-intro-refine" && (
-            <ModuleIntroSlide
-              number={4}
-              label="Refine"
-              headline="The model learns from every market response"
-              description="Every deal won, lost, or overridden is a signal. The model absorbs these continuously, sharpening guidance with every transaction."
-            />
-          )}
           {config.kind === "refine" && <RefineSlide step={subStep} />}
-          {config.kind === "module-intro-profit" && (
-            <ModuleIntroSlide
-              number={5}
-              label="Profit Growth"
-              headline="Where it all comes together — measurable business impact"
-              description="Design, power, execution, and refinement compound into measurable results: higher margins, better win rates, and consistent pricing."
-            />
-          )}
           {config.kind === "profit-growth" && (
             <ProfitGrowthSlide
               step={subStep}
