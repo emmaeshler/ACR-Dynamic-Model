@@ -20,6 +20,9 @@
 # production
 /build
 
+# generated presentation export
+/public/presentation.html
+
 # misc
 .DS_Store
 *.pem

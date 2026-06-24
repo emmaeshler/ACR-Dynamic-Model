@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { type NavGroup, SlideNav } from "@/components/slide-nav";
 import { OverviewSlide, OVERVIEW_TOTAL_STEPS } from "@/components/slides/overview-slide";
@@ -147,79 +147,10 @@ const AUTO_ANIM_SLIDES = new Set<SlideKind>([
 
 const DEFAULT_DONE_MS = 2000;
 
-async function collectStyles(): Promise<string> {
-  const css: string[] = [];
-  for (const sheet of document.styleSheets) {
-    try {
-      for (const rule of sheet.cssRules) css.push(rule.cssText);
-    } catch {
-      if (sheet.href) {
-        try {
-          const resp = await fetch(sheet.href);
-          css.push(await resp.text());
-        } catch { /* cross-origin, skip */ }
-      }
-    }
-  }
-  return css.join("\n");
-}
-
-const noop = () => {};
-
-function ExportSlides() {
-  const pages: React.ReactNode[] = [];
-  let idx = 0;
-
-  const wrap = (node: React.ReactNode) => (
-    <section key={idx} data-export-slide={idx++} style={{ display: "none" }}>
-      <div className="flex min-h-screen flex-col items-center justify-start pt-14 pb-16 overflow-x-hidden w-full">
-        {node}
-      </div>
-    </section>
-  );
-
-  pages.push(wrap(<IntroSlide />));
-
-  for (let s = 0; s < OVERVIEW_TOTAL_STEPS; s++)
-    pages.push(wrap(<OverviewSlide step={s} />));
-
-  for (let s = 0; s < ONE_MODEL_TOTAL_STEPS; s++)
-    pages.push(wrap(<OneModelSlide step={s} onAutoAdvance={noop} />));
-
-  pages.push(wrap(<ModuleIntroSlide number={2} label="Power" headline="How the model produces practical prices" description="ML analyzes millions of transactions to surface pricing signals. A generative AI layer translates those signals into clear, defensible recommendations." />));
-
-  for (let s = 0; s < POWER_TOTAL_STEPS; s++)
-    pages.push(wrap(<PowerSlide step={s} />));
-
-  pages.push(wrap(<AiTechniquesSlide />));
-
-  pages.push(wrap(<ModuleIntroSlide number={3} label="Execute" headline="Layering in the client — where context meets the price" description="The model's recommendations meet the real world: customer relationships, business rules, and market position shape the final guidance for every deal." />));
-
-  for (let s = 0; s < EXECUTE_TOTAL_STEPS; s++)
-    pages.push(wrap(<ExecuteSlide step={s} />));
-
-  pages.push(wrap(<ModuleIntroSlide number={4} label="Refine" headline="The model learns from every market response" description="Every deal won, lost, or overridden is a signal. The model absorbs these continuously, sharpening guidance with every transaction." />));
-
-  for (let s = 0; s < REFINE_TOTAL_STEPS; s++)
-    pages.push(wrap(<RefineSlide step={s} />));
-
-  pages.push(wrap(<ModuleIntroSlide number={5} label="Profit Growth" headline="Where it all comes together — measurable business impact" description="Design, power, execution, and refinement compound into measurable results: higher margins, better win rates, and consistent pricing." />));
-
-  for (let s = 0; s < PROFIT_GROWTH_TOTAL_STEPS; s++)
-    pages.push(wrap(<ProfitGrowthSlide step={s} onAutoAdvance={noop} />));
-
-  pages.push(wrap(<ClosingSummarySlide />));
-  pages.push(wrap(<EndSlide onRestart={noop} />));
-
-  return <>{pages}</>;
-}
-
 export default function Home() {
   const [slide, setSlide] = useState(0);
   const [subStep, setSubStep] = useState(0);
   const [animationDone, setAnimationDone] = useState(false);
-  const [exporting, setExporting] = useState(false);
-  const exportRef = useRef<HTMLDivElement>(null);
   const total = SLIDES.length;
 
   const maxSteps = SUB_STEP_CONFIG[slide] ?? 0;
@@ -276,92 +207,6 @@ export default function Home() {
   );
 
   useEffect(() => {
-    if (!exporting || !exportRef.current) return;
-    const frame = requestAnimationFrame(async () => {
-      const styles = await collectStyles();
-      const container = exportRef.current!;
-      container.querySelectorAll("[style]").forEach((el) => {
-        const s = (el as HTMLElement).style;
-        if (s.opacity === "0") s.opacity = "1";
-        if (s.transform && s.transform !== "none") s.transform = "none";
-      });
-      const content = container.innerHTML;
-      const totalSlides = container.querySelectorAll("[data-export-slide]").length;
-
-      const navScript = `
-<script>
-(function(){
-  var current = 0;
-  var total = ${totalSlides};
-  var slides = document.querySelectorAll("[data-export-slide]");
-  var counter = document.getElementById("slide-counter");
-  var backBtn = document.getElementById("nav-back");
-  var nextBtn = document.getElementById("nav-next");
-
-  function show(idx) {
-    if (idx < 0 || idx >= total) return;
-    slides[current].style.display = "none";
-    current = idx;
-    slides[current].style.display = "block";
-    counter.textContent = (current + 1) + " / " + total;
-    backBtn.disabled = current === 0;
-    nextBtn.disabled = current === total - 1;
-    window.scrollTo(0, 0);
-  }
-
-  show(0);
-
-  backBtn.addEventListener("click", function(){ show(current - 1); });
-  nextBtn.addEventListener("click", function(){ show(current + 1); });
-
-  document.addEventListener("keydown", function(e){
-    if (e.key === "ArrowRight" || e.key === "ArrowDown") { e.preventDefault(); show(current + 1); }
-    else if (e.key === "ArrowLeft" || e.key === "ArrowUp") { e.preventDefault(); show(current - 1); }
-  });
-})();
-</script>`;
-
-      const navBar = `
-<nav style="position:fixed;bottom:0;left:0;right:0;display:flex;align-items:center;justify-content:center;gap:16px;padding:12px 24px;background:rgba(255,255,255,0.95);backdrop-filter:blur(8px);border-top:1px solid #e5e7eb;z-index:9999;font-family:system-ui,sans-serif;">
-  <button id="nav-back" style="padding:8px 20px;border-radius:8px;border:1px solid #d1d5db;background:white;cursor:pointer;font-size:14px;color:#374151;">← Back</button>
-  <span id="slide-counter" style="font-size:14px;color:#6b7280;min-width:60px;text-align:center;">1 / ${totalSlides}</span>
-  <button id="nav-next" style="padding:8px 20px;border-radius:8px;border:none;background:#00446A;color:white;cursor:pointer;font-size:14px;">Next →</button>
-</nav>`;
-
-      const html = `<!DOCTYPE html>
-<html lang="en" class="${document.documentElement.className}">
-<head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Inside Your Dynamic Model | INSIGHT2PROFIT</title>
-<style>
-${styles}
-* { animation-play-state: paused !important; }
-body { margin: 0; padding: 0; padding-bottom: 60px; }
-[data-export-slide] { display: none; }
-</style>
-</head>
-<body class="${document.body.className}">
-${content}
-${navBar}
-${navScript}
-</body>
-</html>`;
-
-      const blob = new Blob([html], { type: "text/html" });
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = "presentation.html";
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(a.href);
-      setExporting(false);
-    });
-    return () => cancelAnimationFrame(frame);
-  }, [exporting]);
-
-  useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (e.key === "ArrowRight" || e.key === "ArrowDown") {
         e.preventDefault();
@@ -389,7 +234,7 @@ ${navScript}
           transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
           className="w-full"
         >
-          {config.kind === "intro" && <IntroSlide onExport={() => setExporting(true)} />}
+          {config.kind === "intro" && <IntroSlide />}
           {config.kind === "overview" && <OverviewSlide step={subStep} />}
           {config.kind === "one-model" && (
             <OneModelSlide
@@ -444,11 +289,6 @@ ${navScript}
         </motion.div>
         </AnimatePresence>
       </main>
-      {exporting && (
-        <div ref={exportRef} className="fixed left-[-9999px] top-0 w-screen" aria-hidden>
-          <ExportSlides />
-        </div>
-      )}
       <SlideNav
         current={slide}
         currentSubStep={hasSubSteps ? subStep : undefined}
@@ -581,19 +421,18 @@ function RotatingWord() {
   );
 }
 
-function IntroSlide({ onExport }: { onExport?: () => void }) {
+function IntroSlide() {
   return (
     <div className="relative flex min-h-[calc(100vh-4rem)] flex-col items-center justify-center overflow-hidden px-6 text-center">
       <IntroBackdrop />
 
-      {onExport && (
-        <button
-          onClick={onExport}
-          className="absolute right-6 top-6 z-20 rounded-lg bg-white/10 px-4 py-2 text-sm font-medium text-white backdrop-blur-sm transition-colors hover:bg-white/20"
-        >
-          Download as HTML
-        </button>
-      )}
+      <a
+        href="/presentation.html"
+        download="presentation.html"
+        className="absolute right-6 top-6 z-20 rounded-lg bg-white/10 px-4 py-2 text-sm font-medium text-white backdrop-blur-sm transition-colors hover:bg-white/20"
+      >
+        Download as HTML
+      </a>
 
       <div className="relative z-10 mx-auto max-w-3xl">
         <div className="mb-8 flex items-center justify-center gap-3">
